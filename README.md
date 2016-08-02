@@ -1,5 +1,5 @@
 # PySM: Python Sky Model  v-1.0
-Most recent version available on [GitHub](https://github.com/bthorne93/PySM)
+Most recent version available on [GitHub](https://github.com/bthorne93/PySM_public)
 
 **Authors**: Ben Thorne, David Alonso, Sigurd Naess, Jo Dunkley 
 
