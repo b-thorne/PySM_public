@@ -6,7 +6,7 @@ Most recent version available on [GitHub](https://github.com/bthorne93/PySM_publ
 **Contact**: ben.thorne@physics.ox.ac.uk
 
 If you use the code for any publications, please acknowledge it and cite:
-[Thorne et al 2016, arxiv:XXXXX](paper url)
+[Thorne et al 2016, arxiv: 1608.02841](http://arxiv.org/abs/1608.02841)
 
 ------------------------------------------------------------------------
 ### Outline:
