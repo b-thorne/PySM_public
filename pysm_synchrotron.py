@@ -46,6 +46,3 @@ def main(fname_config):
 			hp.write_map(out.output_dir+out.output_prefix+'synch_%d'%(out.output_frequency[i])+'_'+str(out.nside)+'.fits',syn[:,i,:],coord='G',column_units=out.output_units)
 
 	return np.concatenate([scaled_map_synch[np.newaxis,...],scaled_map_synch_pol])
-
-
-
