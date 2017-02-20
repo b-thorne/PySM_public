@@ -25,12 +25,12 @@ multipoles.  The details of the procedures developed can be found in the accompa
 
 This code is based on the large-scale Galactic part of Planck Sky Model code and uses
 some of its inputs (http://www.apc.univ-paris7.fr/~delabrou/PSM/psm.html,
-astro-ph/1207.3675).
+[astro-ph/1207.3675](http://arxiv.org/abs/1207.3675)).
 
 -----------------------------------------------------------------------
 
 ### Dependencies:
-This code uses python, and needs the healpy, numpy, scipy and astropy libraries.
+This code uses python, and needs the healpy, numpy, scipy and astropy modules.
 Versions of those that it is known to work with are:
 
     - python 2.7.6
