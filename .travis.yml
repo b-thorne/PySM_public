@@ -2,4 +2,4 @@ language: python
 python:
     - "2.7"
 install: "pip install healpy"
-script: test/checks.py
+script: python test/checks.py
