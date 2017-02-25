@@ -14,7 +14,6 @@ if __name__ == '__main__':
     Config = ConfigParser.ConfigParser()
     Config.read(parser.parse_args().config_file)
     out = output(Config._sections['GlobalParameters'])
-
     if not os.path.exists(out.output_dir): os.makedirs(out.output_dir)
     with open(out.output_dir+out.output_prefix+'main_config.ini','w') as configfile: Config.write(configfile)
 

@@ -1,6 +1,6 @@
 import numpy as np
 import healpy as hp
-import os
+import subprocess
 
 class bcolors:
     HEADER = '\033[95m'
@@ -21,31 +21,28 @@ class bcolors:
 def compare_maps(component,i_check) :
     for nu in ['30p0','100p0','353p0'] :
         mp1=hp.read_map('test/benchmark/check%d'%i_check+component+'_'+nu+'_64.fits',field=[0,1,2],verbose=False)
-        os.system('ls test')
-    return 0
-#        mp2=hp.read_map('test/Output/check%d'%i_check+component+'_'+nu+'_64.fits',field=[0,1,2],verbose=False)
-#        for i in [0,1,2] :
-#            norm=np.std(mp1[i])
-#            if norm<=0 : norm=1.
-#            diff=np.std((mp1[i]-mp2[i]))/norm
-#            if diff>1E-6 :
-#                return 0
-#    return 1
+        mp2=hp.read_map('test/Output/check%d'%i_check+component+'_'+nu+'_64.fits',field=[0,1,2],verbose=False)
+        for i in [0,1,2] :
+            norm=np.std(mp1[i])
+            if norm<=0 : norm=1.
+            diff=np.std((mp1[i]-mp2[i]))/norm
+            if diff>1E-6 :
+                return 0
+    return 1
 
 def run_check(i_check,component) :
     print "Running check %d..."%i_check
-    os.system('python main.py test/check%d_config.ini > log_checks 2>&1'%i_check)
+    subprocess.call(['python', 'main.py', 'test/check%d_config.ini'%i_check])
     passed=compare_maps(component,i_check)
     if passed :
         print bcolors.OKGREEN+"   PASSED"+bcolors.ENDC
     else :
         print bcolors.FAIL+"   FAILED"+bcolors.ENDC
-    os.system('rm -r test/Output log_checks')
+    subprocess.call(['rm', '-r', 'test/Output'])
     return passed
 
 n_passed=0; n_total=0
 for i_check,component in zip([1,2,3,4,5,6,7,8,9,10,11],['therm','synch','spinn','freef','cmb', 'therm', 'synch', 'spinn', 'therm', 'synch', 'therm']) :
-    os.system('ls test')
     n_passed+=run_check(i_check,component)
     n_total+=1
 print "%d tests passed "%n_passed+"out of %d"%n_total
