@@ -3,6 +3,7 @@ python:
     - "2.7"
 deploy:
     file_glob: true
+install: pip install healpy
 script:
     - mkdir test/Output
     - python test/checks.py
