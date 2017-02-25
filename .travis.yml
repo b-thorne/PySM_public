@@ -1,5 +1,7 @@
 language: python
 python:
     - "2.7"
+deploy:
+    file_glob: true
 install: "pip install healpy"
 script: python test/checks.py
