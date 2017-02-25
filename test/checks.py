@@ -21,14 +21,16 @@ class bcolors:
 def compare_maps(component,i_check) :
     for nu in ['30p0','100p0','353p0'] :
         mp1=hp.read_map('test/benchmark/check%d'%i_check+component+'_'+nu+'_64.fits',field=[0,1,2],verbose=False)
-        mp2=hp.read_map('test/Output/check%d'%i_check+component+'_'+nu+'_64.fits',field=[0,1,2],verbose=False)
-        for i in [0,1,2] :
-            norm=np.std(mp1[i])
-            if norm<=0 : norm=1.
-            diff=np.std((mp1[i]-mp2[i]))/norm
-            if diff>1E-6 :
-                return 0
-    return 1
+        os.system('ls test')
+    return 0
+#        mp2=hp.read_map('test/Output/check%d'%i_check+component+'_'+nu+'_64.fits',field=[0,1,2],verbose=False)
+#        for i in [0,1,2] :
+#            norm=np.std(mp1[i])
+#            if norm<=0 : norm=1.
+#            diff=np.std((mp1[i]-mp2[i]))/norm
+#            if diff>1E-6 :
+#                return 0
+#    return 1
 
 def run_check(i_check,component) :
     print "Running check %d..."%i_check
