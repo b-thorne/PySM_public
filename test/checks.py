@@ -43,6 +43,7 @@ def run_check(i_check,component) :
 
 n_passed=0; n_total=0
 for i_check,component in zip([1,2,3,4,5,6,7,8,9,10,11],['therm','synch','spinn','freef','cmb', 'therm', 'synch', 'spinn', 'therm', 'synch', 'therm']) :
+    os.system('ls test')
     n_passed+=run_check(i_check,component)
     n_total+=1
 print "%d tests passed "%n_passed+"out of %d"%n_total
