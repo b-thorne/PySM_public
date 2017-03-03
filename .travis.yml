@@ -4,7 +4,8 @@ python:
 deploy:
     file_glob: true
 install:
-    - pip install healpy
-    - pip install scipy
+    - "pip install --only-binary=numpy,scipy numpy scipy"
+    - "pip install healpy"
+
 script:
     - python test/checks.py
