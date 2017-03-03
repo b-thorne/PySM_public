@@ -1,7 +1,7 @@
 import numpy as np
 import healpy as hp
 import subprocess
-
+import os
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -32,7 +32,7 @@ def compare_maps(component,i_check) :
 
 def run_check(i_check,component) :
     print "Running check %d..."%i_check
-    subprocess.call(['python', 'main.py', 'test/check%d_config.ini'%i_check])
+    os.system('python main.py test/check%d_config.ini > log_checks 2>&1'%i_check)
     passed=compare_maps(component,i_check)
     if passed :
         print bcolors.OKGREEN+"   PASSED"+bcolors.ENDC
