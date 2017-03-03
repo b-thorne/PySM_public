@@ -9,7 +9,10 @@ def main(fname_config):
 	Config = ConfigParser.ConfigParser()
 	Config.read(fname_config)
 	out = output(Config._sections['GlobalParameters'])
-	Config.read('./ConfigFiles/'+Config.get('CMB','model')+'_config.ini')
+	a=Config.read('./ConfigFiles/'+Config.get('CMB','model')+'_config.ini')
+	if a==[] :
+		print 'Couldn\'t find file '+'./ConfigFiles/'+Config.get('CMB','model')+'_config.ini'
+		exit(1)
 	CMB = component(Config._sections['CMB'],out.nside)
 	with open(out.output_dir+out.output_prefix+'cmb_config.ini','w') as configfile: Config.write(configfile)
 

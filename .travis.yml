@@ -1,0 +1,12 @@
+language: python
+python:
+    - "2.7"
+deploy:
+    file_glob: true
+install:
+    - pip install --upgrade pip setuptools wheel
+    - pip install --only-binary=numpy,scipy numpy scipy
+    - pip install healpy
+
+script:
+    - python test/checks.py
