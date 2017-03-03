@@ -39,7 +39,8 @@ def file_path(o,j):
 
 def write_output_single(sky_freq,o,Config,i):
     path = file_path(o,i)
-    hp.write_map(path, hp.ud_grade(sky_freq, nside_out=o.nside), coord='G', column_units = ''.join(o.output_units), column_names = None, extra_header = config2list(Config,o,i))
+    print path
+    hp.write_map(path, hp.ud_grade(sky_freq, nside_out=o.nside), coord='G', column_units = ''.join(o.output_units), column_names = None), extra_header = config2list(Config,o,i))
 
 def config2list(config,o,i):
     info = []

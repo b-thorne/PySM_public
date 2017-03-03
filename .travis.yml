@@ -3,7 +3,8 @@ python:
     - "2.7"
 deploy:
     file_glob: true
-install: pip install healpy
+install:
+    - pip install healpy
+    - pip install scipy
 script:
-    - mkdir test/Output
     - python test/checks.py
