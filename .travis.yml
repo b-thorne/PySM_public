@@ -10,5 +10,3 @@ install:
 
 script:
     - python test/checks.py
-deploy:
-    skip_cleanup: True
