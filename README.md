@@ -37,16 +37,14 @@ Versions of those that it is known to work with are:
     - healpy 1.9.1
     - numpy 1.8.1
     - scipy 0.14.0
-    - astropy 1.1.1
 
 It requires at least:
 
     - healpy 1.9.1
 
 Note that the healpy.write_map function will not work properly with outdated versions
-of healpy.  healpy.write_map will also throw a warning when run with the most recent
-versions of healpy and astropy because healpy uses a deprecated astropy function.
-This does not affect the outcome of the code.
+of healpy.  healpy.write_map will also throw a warning to do with a deprecated version
+of clobber. This will not affect the output of the code.
 
 --------------------------------------------------------------------------
 ### Running the code
@@ -117,14 +115,21 @@ in './ConfigFiles/<model>_config.ini'.
 
 ### Alternatives
 
-**'dust2'** (**'dust3'**) = emissivity that varies spatially on degree scales, drawn from a Gaussian
-with beta=1.59 \pm 0.2 (0.3). A Gaussian variation is not physically motivated, but
-amount of variation consistent with Planck.
+**'dust2'** (**'dust3'**) = emissivity that varies spatially on degree scales, drawn
+from a Gaussian with beta=1.59 \pm 0.2 (0.3). A Gaussian variation is not physically
+motivated, but amount of variation consistent with Planck.
 
-**'dust4'** = a generalization of model 1 to multiple dust populations.  It has been found that
-a two component model is still a good fit to the Planck data.  This option uses the two
-component model from Finkbeiner, D. P., Davis, M., & Schlegel, D. J. 1999,Astrophysical Journal,
-524, 867.
+**'dust4'** = a generalization of model 1 to multiple dust populations.  It has been
+found that a two component model is still a good fit to the Planck data.  This option
+uses the two component model from Finkbeiner, D. P., Davis, M., & Schlegel, D. J. 1999,
+Astrophysical Journal, 524, 867.
+
+**'dust_decorr'** = implementation of the frequency decorrelation of dust, modelling the
+impact of averaging over spatially varying dust spectral indices both unresolved and along
+the line of sight. We take an analytic frequency covariance (Vansyngel 2016 arXiv:1611.02577)
+to calculate the resulting frequency dependence. The user specifies a single parameter,
+the correlation length. The smaller the correlation length, the larger the decorrelation.
+This parameter is constant across the sky.
 
 **'synchrotron2'** = synchrotron index steepens off the Galactic plane, from -3.0 in the
 plane to -3.3 off the plane. Consistent with WMAP.
