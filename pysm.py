@@ -215,7 +215,7 @@ def scale_freqs(c, o, pol=None, samples=10.):
          if not o.bandpass: 
              return (freq[...,np.newaxis]/freq_ref)**(c.beta_template+c.beta_curve*np.log(freq[...,np.newaxis]/c.freq_curve))
          else: 
-             return (1./freq_cen**2)[...,np.newaxis]*np.sum((freq**2)[...,np.newaxis]*(freq[...,np.newaxis]/c.freq_ref)**(c.beta_template+c.beta_curve*np.log(freq[...,np.newaxis]/c.freq_curve)),axis=np.ndim(freq)-1)/samples
+             return (1./freq_cen**2)[...,np.newaxis]*np.sum((freq**2)[...,np.newaxis]*(freq[...,np.newaxis]/freq_ref)**(c.beta_template+c.beta_curve*np.log(freq[...,np.newaxis]/c.freq_curve)),axis=np.ndim(freq)-1)/samples
 
 
      if c.spectral_model=="powerlaw": 
