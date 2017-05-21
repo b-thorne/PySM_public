@@ -1,0 +1,325 @@
+"""
+.. module:: common
+   :platform: Unix
+   :synopsis: convenience functions used in other modules.
+
+.. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk>
+"""
+
+import healpy as hp
+import numpy as np
+import scipy.constants as constants
+import scipy.integrate
+import sys
+
+def FloatOrArray(model):
+    """Decorator to modify models to allow computation across an array of
+    frequencies, and for a single float.
+
+    :param model: model function which we will decorate.
+    :type model: function
+    :return: wrapped function -- function
+
+    """
+    def decorator(nu):
+        """Evaluate if nu is a float."""
+        try:
+            nu_float = float(nu)
+            return model(nu_float) 
+        except TypeError:
+            try:
+                """If not float, check if nu is one dimensional"""
+                nu_1darray = np.asarray(nu)
+                if not (nu_1darray.ndim == 1):
+                    print("Frequencies must be float or convertable to 1d array.")
+                    sys.exit(1)
+                    """If it is 1d array evaluate model function over all its elements."""
+                return np.array(map(model, list(nu_1darray)))
+            except ValueError:
+                """Fail if not convertable to 1d array"""
+                print("Frequencies must be either float or convertable to array.")
+                sys.exit(1)
+    return decorator
+
+def read_map(fname, nside, field = (0), verbose = False):
+    """Convenience function wrapping healpy's read_map and upgrade /
+    downgrade in one function.
+    
+    :param fname: path to fits file.  
+    :type fname: str.   
+    :param nside: nside to which we up or down grade.  
+    :type nside: int.  
+    :param field: fields of fits file from which to read.  
+    :type field: tuple of ints.  
+    :param verbose: run in verbose mode.  
+    :type verbose: bool.
+    :returns: numpy.ndarray -- the maps that have been read. 
+    """
+    return hp.ud_grade(hp.read_map(fname, field = field, verbose = verbose), nside_out = nside)
+
+def read_key(Class, keyword, dictionary):
+    """Gives the input class an attribute with the name of the keyword and
+    value of the corresponding dictionary item.
+
+    :param Class: Class instance for which we are defining attributes.
+    :type Class: object.
+    :param keyword: keyword of the dictionary element to set to Class.__class__.__name__
+    :type keyworkd: str.
+    :param dictionary: dictionary from which we are taking the value corresponding to keyword.
+    :type dictionary: dict.
+    :returns: does not return, but modifies inputs.
+    """
+    try:
+	setattr(Class, '_%s__%s'%(Class.__class__.__name__, keyword), dictionary[keyword])
+    except KeyError: 
+	print("%s not set."%keyword)
+    return
+
+def convert_units(unit1, unit2, nu):
+    """Function to do unit conversions between Rayleigh-Jeans units, CMB
+    units, and flux units.
+
+    :param unit1: unit from which we are converting.
+    :type unit1: str.
+    :param unit2: unit to which we are converting.
+    :type unit2: str.
+    :param nu: frequency at which to calculate unit conversion.
+    :type nu: float, np.ndarray.
+    :returns: unit conversion coefficient - float, numpy.ndarray.
+    """
+    if "K_CMB" in unit1:
+	#first deal with the unit conversion
+	if "Jysr" in unit2:
+	    conversion_factor = K_CMB2Jysr(nu) 
+	elif "K_RJ" in unit2:
+	    conversion_factor = K_CMB2Jysr(nu) / K_RJ2Jysr(nu)
+	elif "K_CMB" in unit2:
+	    conversion_factor = np.ones_like(nu)
+	else:
+	    print("Incorrect format or unit.")
+
+    elif "K_RJ" in unit1:
+	if "Jysr" in unit2:
+	    conversion_factor = K_RJ2Jysr(nu)
+	elif "K_CMB" in unit2:
+	    conversion_factor = K_RJ2Jysr(nu) / K_CMB2Jysr(nu)
+	elif "K_RJ" in unit2:
+	    conversion_factor = np.ones_like(nu)
+	else: 
+	    print("Incorrect format or unit.")
+
+    elif "Jysr" in unit1:
+	if "Jysr" in unit2:
+	    conversion_factor = np.ones_like(nu)
+	elif "K_RJ" in unit2:
+	    conversion_factor = 1. / K_RJ2Jysr(nu)
+	elif "K_CMB" in unit2:
+	    conversion_factor = 1. / K_CMB2Jysr(nu)
+	else:
+	    print("Incorrect format or unit.")
+
+    # Now deal with the magnitude
+    if "n" in unit1[0]:
+	prefac = 1.e-9
+    elif "u" in unit1[0]:
+	prefac = 1.e-6
+    elif "m" in unit1[0]:
+	prefac = 1.e-3
+    elif "k" in unit1[0]:
+	prefac = 1.e3
+    elif "M" in unit1[0]:
+	prefac = 1.e6
+    elif "G" in unit1[0]:
+	prefac = 1.e9
+    elif "K" in unit1[0]:
+	prefac = 1.
+    elif "J" in unit1[0]:
+	prefac = 1.
+    else:
+	print("Invalid format for unit1 in convert_units")
+	sys.exit(1)
+
+    if "n" in unit2[0]:
+	postfac = 1.e9
+    elif "u" in unit2[0]:
+	postfac = 1.e6
+    elif "m" in unit2[0]:
+	postfac = 1.e3
+    elif "k" in unit2[0]:
+	postfac = 1.e-3
+    elif "M" in unit2[0]:
+	postfac = 1.e-6
+    elif "G" in unit2[0]:
+	postfac = 1.e-9
+    elif "K" in unit2[0]:
+	postfac = 1.
+    elif "J" in unit2[0]:
+	postfac = 1.
+    else:
+	print("Invalid format for unit2 in convert_units")
+	sys.exit(1)
+
+    return conversion_factor * prefac * postfac
+
+@FloatOrArray
+def K_CMB2Jysr(nu): 
+    """Kelvin_CMB to Janskies per steradian. Nu is in GHz.
+
+    :param nu: frequency in GHz at which to calculate unit conversion.
+    :type nu: float, numpy.ndarray
+    :return: unit conversion coefficient - float.
+    
+    """
+    return dB(nu, 2.7255) * 1.e26
+
+@FloatOrArray
+def K_RJ2Jysr(nu):
+    """Kelvin_RJ to Janskies per steradian. Nu is in GHz.
+
+    :param nu: frequency in GHz at which to calculate unit conversion.
+    :type nu: float, numpy.ndarray.                                                                                                                      
+    :return: unit conversion coefficient - float. 
+    
+    """
+    return  2. * (nu * 1.e9 / constants.c) ** 2 * constants.k * 1.e26
+
+def B(nu, T):
+    """Planck function. 
+
+    :param nu: frequency in GHz at which to evaluate planck function.
+    :type nu: float.
+    :param T: temperature of black body. 
+    :type T: float.
+    :return: float -- black body brightness.
+
+    """
+    x = constants.h * nu * 1.e9 / constants.k / T
+    return 2. * constants.h * (nu * 1.e9) ** 3 / constants.c ** 2 / np.expm1(x)
+
+def dB(nu, T):
+    """Differential planck function. 
+    
+    :param nu: frequency in GHz at which to evaluate differential planck function.
+    :type nu: float.
+    :param T: temperature of black body. 
+    :type T: float.
+    :return: float -- differential black body function. 
+
+    """
+    x = constants.h * nu * 1.e9 / constants.k / T
+    return B(nu, T) / T * x * np.exp(x) / np.expm1(x)
+
+def bandpass_convert_units(unit, channel):
+    """Function to calculate the unit conversion factor after bandpass integration from 
+    MJysr to either RJ, CMB or MJysr. 
+
+    We integrate the signal in units of MJysr:
+
+    [I_MJysr] = int I_Mjysr(nu) * weights * dnu
+
+    In order to convert to K_CMB we define A_CMB:
+
+    [T_CMB] = A_CMB [I_MJysr] 
+
+    If we observe the CMB then:
+
+    [T_CMB] = A_CMB * int dB(nu, 2.7255) * T_CMB * weights * dnu
+
+    So: A_CMB = 1. / int dB(nu, 2.7255) * weights * dnu. 
+
+    In a similar way for Rayleigh-Jeans units:
+
+    A_RJ = 1. / int 2 * k * nu ** 2 / c ** 2 * weights * dnu
+
+    :param unit1: unit from which to convert (K_RJ, K_CMB, Jysr) with SI prefix (n, u, m, k, G).
+    :type unit1: str.
+    :param unit2: unit to which to convert (K_RJ, K_CMB, Jysr) with SI prefix (n, u, m, k, G).
+    :type unit2: str.
+    :param channel: tuple containing bandpass frequencies and weights: (frequencies, weights).
+    :type channel: tuple.
+    :param nu_c: central frequency used to calculate unit conversions. If not set the mean frequency of the bandpass is used. 
+    :type nu_c: float.
+    :return: unit conversion factor -- float
+
+    """
+
+    (frequencies, weights) = channel
+    #First do conversion of RJ, CMB, MJy
+    if "CMB" in unit:
+        prefac = 1.e-20 / scipy.integrate.simps(weights * K_CMB2Jysr(frequencies), frequencies)
+    elif "RJ" in unit:
+        prefac = 1.e-20 / scipy.integrate.simps(weights * K_RJ2Jysr(frequencies), frequencies)
+    elif "Jysr" in unit:
+        prefac = 1.
+
+    #next sort out magnitude
+    if "n" in unit[0]:
+        postfac = 1.e9
+    elif "u" in unit[0]:
+        postfac = 1.e6
+    elif "m" in unit[0]:
+        postfac = 1.e3
+    elif "k" in unit[0]:
+        postfac = 1.e-3
+    elif "M" in unit[0]:
+        postfac = 1.e-6
+    elif "G" in unit[0]:
+        postfac = 1.e-9
+    elif "K" in unit[0]:
+        postfac = 1.
+    elif "J" in unit[0]:
+        postfac = 1.
+    else:
+        print("Invalid format for unit in bandpass_convert_units")
+        sys.exit(1)
+                    
+    return prefac * postfac
+
+
+def invert_safe(m):
+    """Function to safely invert almost positive definite matrix.
+
+    :param m: matrix to invert.
+    :type m: numpy.ndarray.
+    :return: inverted matrix -- numpy.ndarray
+
+    """
+    mb = m.copy()
+    w_ok = False
+    while not w_ok :
+	w, v = np.linalg.eigh(mb)
+	wmin = np.min(w)
+	if wmin > 0:
+	    w_ok = True
+	else:
+
+    winv = 1. / w
+    return np.dot(v, np.dot(np.diag(winv), np.transpose(v)))
+        
+def check_lengths(*args):
+    """Function to check that all lengths of the input lists or arrays are equal.
+    Returns True if lengths are equal, False if they are not.
+
+    :param args: arrays or lists to check the length of. 
+    :type args: list, numpy.ndarray
+    :return: True if lengths are equal, else False -- bool
+
+    """
+    return (len(set(map(lambda x: len(x), args))) <= 1)
+
+def tophat_bandpass(nu_c, delta_nu, samples = 50):
+    """Calculate a tophat bandpass for a given central frequency and width. 
+    This will return a tuple containing (frequencies, weights). 
+
+    :param nu_c: central frequency of bandpass.
+    :type nu_c: float.
+    :param delta_nu: width of bandpass.
+    :type delta_nu: float.
+    :param samples: number samples in bandpass; the more samples the more accurate the result.
+    :type samples: int.
+    :return: tuple - (frequencies, weights)
+
+    """
+    freqs = np.linspace(nu_c - delta_nu / 2., nu_c + delta_nu / 2., samples)
+    weights = np.ones_like(freqs) / (freqs.size * delta_nu / samples)
+    return (freqs, weights)
