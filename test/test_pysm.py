@@ -25,10 +25,10 @@ class BandpassTests(unittest.TestCase):
         self.analytic_U = None
         
     def test_bandpass_1(self):
-        np.testing.assert_almost_equal(pysm.pysm.bandpass(self.frequencies, self.weights, self.x) / self.expected_result_1, 1., decimal = 6)
+        np.testing.assert_almost_equal(pysm.pysm.bandpass(self.frequencies, self.weights, self.x) / self.expected_result_1, 1., decimal = 5)
 
     def test_bandpass_2(self):
-        np.testing.assert_almost_equal(pysm.pysm.bandpass(self.frequencies, self.weights, self.sin) / self.expected_result_2, 1., decimal = 6)
+        np.testing.assert_almost_equal(pysm.pysm.bandpass(self.frequencies, self.weights, self.sin) / self.expected_result_2, 1., decimal = 5)
 
 class testCheck_Bandpass_Frequencies(unittest.TestCase):
     def setUp(self):
@@ -87,9 +87,9 @@ class TestNoise(unittest.TestCase):
         os.system("rm %s"%self.test_file)
         
     def test_noise(self):
-        np.testing.assert_almost_equal(self.check_T, 1., decimal = 3)
-        np.testing.assert_almost_equal(self.check_Q, 1., decimal = 3)
-        np.testing.assert_almost_equal(self.check_U, 1., decimal = 3)
+        np.testing.assert_almost_equal(self.check_T, 1., decimal = 2)
+        np.testing.assert_almost_equal(self.check_Q, 1., decimal = 2)
+        np.testing.assert_almost_equal(self.check_U, 1., decimal = 2)
         
         
 def main():
