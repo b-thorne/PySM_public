@@ -73,9 +73,9 @@ def d4(nside):
 def d5(nside):
     return [{
         'model' : 'hensley_draine_2017',
-        'uval' : 0.01,
+        'uval' : read_map(template('HD17_U.fits'), nside, field = 0),
         'fcar' : 1.,
-        'fsilfe' : 1.,
+        'f_fe' : 0.44,
         'nu_0_I' : 545.,
         'nu_0_P' : 353.,
         'A_I' : read_map(template('dust_t_new.fits'), nside, field = 0),
@@ -96,6 +96,20 @@ def d6(nside):
         'temp' : read_map(template('dust_temp.fits'), nside, field = 0),
         'add_decorrelation' : True,
         'corr_len' : 5.0
+    }]
+
+def d7(nside):
+    return [{
+        'model' : 'hensley_draine_2017',
+        'uval' : read_map(template('HD17_U.fits'), nside, field = 0),
+        'fcar' : 1.,
+        'f_fe' : 0.,
+        'nu_0_I' : 545.,
+        'nu_0_P' : 353.,
+        'A_I' : read_map(template('dust_t_new.fits'), nside, field = 0),
+        'A_Q' : read_map(template('dust_q_new.fits'), nside, field = 0),
+        'A_U' : read_map(template('dust_u_new.fits'), nside, field = 0),
+        'add_decorrelation' : False,
     }]
 
 def s1(nside):

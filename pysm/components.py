@@ -13,6 +13,7 @@ import scipy.constants as constants
 from scipy.interpolate import interp1d, RectBivariateSpline
 from scipy.misc import factorial, comb
 from common import read_key, convert_units, FloatOrArray, invert_safe
+from nominal import template
 
 class Synchrotron(object):
     """Class defining attributes and scaling laws of the synchrotron 
@@ -182,9 +183,9 @@ class Dust(object):
     - `Nu_0_P` : reference frequency of Q and U template -- float.                                                     
     - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray, float.                                                                               
     - `Temp` : temperature template used in the modified black body scaling -- numpy.ndarray, float
-    - `Uval` : Parameter required by Hensley and Draine model.
-    - `Fsilfe` : Parameter required by Hensley and Draine model.
-    - `Fcar` : Parameter required by Hensley and Draine model.
+    - `Uval` : logarithm of the radiation field strength. Required by Henlsey Draine 2017.
+    - `F_fe` : mass fraction of silicon grains with iron inclusions relative to total silicon grains.
+    - `Fcar` : mass fraction of carbonaceous grains relative to silicate grains. Required by Hensley and Draine model.
     - `Add_Decorrelation` : add stochastic frequency decorrelation to the SED -- bool.
     - `Corr_Len` : correlation length to use in decorrelation model -- float.
     
@@ -276,11 +277,11 @@ class Dust(object):
             sys.exit(1)
 
     @property
-    def Fsilfe(self):
+    def F_fe(self):
         try:
-            return self.__fsilfe
+            return self.__f_fe
         except AttributeError:
-            print("Dust attribute 'Fsilfe' not set.")
+            print("Dust attribute 'F_fe' not set.")
             sys.exit(1)
 
     @property
@@ -332,6 +333,29 @@ class Dust(object):
     def hensley_draine_2017(self):
         """Returns dust (T, Q, U) maps as a function of observing frequenvy in GHz, nu. Uses the Hensley and Draine 2017 model.
 
+        This is based on a microphysical model of dust grains, taking into account the strength of the local radiation field, U, 
+        the grain compositions (carbonaceous, and silicate with varying degrees of iron abundance) and solving for the 
+        full temperature distribution with grain size. 
+
+        *Model Parameters*
+
+        - log U (uval): Radiation field intensity parameter, sets grain temperatures.
+        Must be between -3 and 5. U is the radiation field energy
+        density relative to the MMP83 radiation field. So uval = -0.5
+        corresponds to a radiation field 10^-0.5 times as intense as the
+        standard interstellar radiation field.
+
+        *Dust composition parameters*
+
+        - fcar: Mass fraction of carbonaceous grains relative to silicate grains
+        - fsilfe: Mass fraction of silicate grains with iron inclusions relative
+        to silicate grains.
+
+        Model is calibrated such that fcar = 1 and fsilfe = 0 reproduce the Planck
+        FIR dust SED. fcar = fsilfe >> 1 will also do so but with different
+        frequency-dependence of the polarized dust emission. In general,
+        fcar =~ 1 + fsilfe is expected.
+
         :return: function - model (T, Q, U) maps.
 
         """
@@ -342,6 +366,7 @@ class Dust(object):
         c = 2.99792458e10
         h = 6.62606957e-27
         k = 1.3806488e-16
+        T_CMB = 2.7255
         
         # Planck function
         def B_nu (nu, T):
@@ -352,42 +377,74 @@ class Dust(object):
             x = h * nu / (k * T)
             return B_nu(nu, T) * x * np.exp(x) / (np.expm1(x) * T)
         
-        # Read in precomputed dust emission spectra as a function of lambda and U
-        T_CMB = 2.7255
-        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'pysm', 'template'))
-        data_sil = np.genfromtxt(os.path.join(data_dir, "sil_DH16_Fe_00_2.0.dat"))
-        data_silfe = np.genfromtxt(os.path.join(data_dir, "sil_DH16_Fe_05_2.0.dat"))
-        data_cion = np.genfromtxt(os.path.join(data_dir, "cion_1.0.dat"))
-        data_cneu = np.genfromtxt(os.path.join(data_dir, "cneu_1.0.dat"))
-        
+        # Read in precomputed dust emission properties in infrared as a function of U
+        # the radiation field strength for a given grain composition and grain size distribution.
+        #data_sil contains the emission properties for silicon grains with no iron inclusions. 
+        data_sil = np.genfromtxt(template("sil_fe00_2.0.dat"))
+        #data_silfe containts the emission properties for sillicon grains with 5% iron inclusions.
+        data_silfe = np.genfromtxt(template("sil_fe05_2.0.dat"))
+        #data_car contains the emission properties of carbonaceous grains. 
+        data_car = np.genfromtxt(template("car_1.0.dat"))
+        #get the wavelength and the set of field strengths over which these values were calculated.
         wav = data_sil[:, 0]
-        uvec = np.linspace(-0.5, 0.5, num = 11, endpoint = True)
-            
-        sil_i = RectBivariateSpline(uvec, wav, ((data_sil[:, 4 : 15] / (9.744e-27)) * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy
-        car_i = RectBivariateSpline(uvec, wav, (((data_cion[:, 4 : 15] + data_cneu[:, 4 : 15]) / (2.303e-27)) * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy
-        silfe_i = RectBivariateSpline(uvec, wav, ((data_silfe[:, 4 : 15] / (9.744e-27)) * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy
-        
-        sil_p = RectBivariateSpline(uvec, wav, ((data_sil[:, 15 : 26] / (9.744e-27)) * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy
-        car_p = RectBivariateSpline(uvec, wav, (((data_cion[:, 15 : 26] + data_cneu[:, 4 : 15]) / (2.303e-27)) * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy
-        silfe_p = RectBivariateSpline(uvec, wav, ((data_silfe[:, 15 : 26] / (9.744e-27)) * (wav[:, np.newaxis] * 1.e-4 / c)*1.e23).T) # to Jy
+        uvec = np.arange(-3., 5.01, 0.1)
 
+        #interpolate the pre-computed solutions for the emissivity as a function of grain composition F_fe, Fcar, and
+        #field strenth U, to get emissivity as a function of (U, wavelength).
+        sil_i = RectBivariateSpline(uvec, wav, (data_sil[:, 3 : 84] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
+        car_i = RectBivariateSpline(uvec, wav, (data_car[:, 3 : 84] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
+        silfe_i = RectBivariateSpline(uvec, wav, (data_silfe[:, 3 : 84] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
+
+        sil_p = RectBivariateSpline(uvec, wav, (data_sil[:, 84 : 165] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
+        car_p = RectBivariateSpline(uvec, wav, (data_car[:, 84 : 165] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
+        silfe_p = RectBivariateSpline(uvec, wav, (data_silfe[:, 84 : 165] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
+        
         @Add_Decorrelation(self)
         @FloatOrArray
         def model(nu):
             """Model of Hensley and Draine 2017. 
 
-            :param nu: frequency at which to evaluate the model. 
+            :param nu: frequency in GHz at which to evaluate the model. 
             :type nu: float.
             :return: maps produced using Hensley and Draine 2017 SED. 
 
             """
-            nu *= 1.e9
-            nu_to_lambda = lambda x: 1.e4 * c / x # in microns
+            #sort out various units of frequency and wavelength. Interpolation is done in wavelength and PySM
+            #uses nu in GHz so we must convert from fequency in GHz to wavelength in microns for both the
+            #evaluation frequencies and reference frequencies.
+            nu_to_lambda = lambda x: 1.e-5 * c / x # GHz to microns. Note this is in cgs units.
             lam =  nu_to_lambda(nu)
-            lam_ref_I = nu_to_lambda(self.Nu_0_I * 1.e9)
-            lam_ref_P = nu_to_lambda(self.Nu_0_P * 1.e9)
-            scaling_I = G_nu(self.Nu_0_I * 1.e9, T_CMB) / G_nu(nu, T_CMB) * (sil_i.ev(self.Uval, lam) + self.Fcar * car_i.ev(self.Uval, lam) + self.Fsilfe * silfe_i.ev(self.Uval, lam)) / (sil_i.ev(self.Uval, lam_ref_I) + self.Fcar * car_i.ev(self.Uval, lam_ref_I) + self.Fsilfe * silfe_i.ev(self.Uval, lam_ref_I))
-            scaling_P = G_nu(self.Nu_0_P * 1.e9, T_CMB) / G_nu(nu, T_CMB) * (sil_p.ev(self.Uval, lam) + self.Fcar * car_p.ev(self.Uval, lam) + self.Fsilfe * silfe_p.ev(self.Uval, lam)) / (sil_p.ev(self.Uval, lam_ref_P) + self.Fcar * car_p.ev(self.Uval, lam_ref_P) + self.Fsilfe * silfe_p.ev(self.Uval, lam_ref_P))
+            lam_ref_I = nu_to_lambda(self.Nu_0_I)
+            lam_ref_P = nu_to_lambda(self.Nu_0_P)
+
+            
+            #calculate the intensity scaling from reference frequency
+            #self.Nu_0_I to frequency nu. Note that the values in brackets
+            #are calculated in Jy/sr/Hz and PySM templates are all in
+            #uK_RJ, therefore we compute a unit conversion too.
+            #scaling_I = convert_units("Jysr", "uK_RJ", self.Nu_0_I) / convert_units("Jysr", "uK_RJ", nu) * (
+            scaling_I = convert_units("Jysr", "uK_RJ", nu) / convert_units("Jysr", "uK_RJ", self.Nu_0_I) *(
+                (1. - self.F_fe) * sil_i.ev(self.Uval, lam)
+                + self.Fcar * car_i.ev(self.Uval, lam)
+                + self.F_fe * silfe_i.ev(self.Uval, lam) ) / (
+                (1. - self.F_fe) * sil_i.ev(self.Uval, lam_ref_I)
+                + self.Fcar * car_i.ev(self.Uval, lam_ref_I)
+                + self.F_fe * silfe_i.ev(self.Uval, lam_ref_I)
+            )
+
+            #now calculate the polarisation scaling from reference
+            #frequency self.Nu_0_P to frequency nu. Note that the values in brackets
+            #are calculated in Jy/sr/Hz and PySM wants all scaling outputs
+            #to be in uK_RJ, therefore we compute a unit conversion too.
+            #scaling_P = convert_units("Jysr", "uK_RJ", self.Nu_0_P) / convert_units("Jysr", "uK_RJ", nu) * (
+            scaling_P = convert_units("Jysr", "uK_RJ", nu) / convert_units("Jysr", "uK_RJ", self.Nu_0_P) *(
+                (1. - self.F_fe) * sil_p.ev(self.Uval, lam)
+                + self.Fcar * car_p.ev(self.Uval, lam)
+                + self.F_fe * silfe_p.ev(self.Uval, lam)) / (
+                (1. - self.F_fe) * sil_p.ev(self.Uval, lam_ref_P)
+                + self.Fcar * car_p.ev(self.Uval, lam_ref_P)
+                + self.F_fe * silfe_p.ev(self.Uval, lam_ref_P)
+            )
             return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
         return model
     

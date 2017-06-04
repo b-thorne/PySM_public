@@ -1,5 +1,4 @@
 from setuptools import setup
-
 setup(name='pysm',
       version='2.0',
       description='Code for simulating the Galactic microwave sky.',
@@ -9,6 +8,8 @@ setup(name='pysm',
       license='MIT',
       packages=['pysm'],
       package_dir={'pysm': 'pysm'},
+      package_data={'pysm':['template/*']},
       install_requires=['healpy', 'numpy', 'scipy', 'astropy'],
       zip_safe=False)
+
 
