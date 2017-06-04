@@ -455,7 +455,6 @@ def bandpass(frequencies, weights, signal):
     # define the integration: integrand = signal(nu) * w(nu) * d(nu)
     # signal is already in MJysr.
     return sum(map(lambda (nu, w): signal(nu) * w * frequency_separation, zip(frequencies, weights)))
-
     
 def check_bpass_weights_normalisation(weights, spacing):
     """Function that checks the weights of the bandpass were normalised

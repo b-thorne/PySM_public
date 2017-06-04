@@ -179,6 +179,35 @@ class test_Check_Lengths(unittest.TestCase):
         self.assertFalse(common.check_lengths(self.list1, self.list3, self.list4))
         self.assertFalse(common.check_lengths(self.list1, self.list5))
         return
+
+class test_Bandpass_Convert_Units(unittest.TestCase):
+    def setUp(self):
+        #first check the integration
+        nsamples = 50
+        nu2 = 40.
+        nu1 = 20.
+
+        weights = np.ones(nsamples) / (nu2 - nu1)
+        freqs = np.linspace(nu1, nu2, nsamples)
+        self.simple_channel = (freqs, weights)
+        
+        #for a tophat bandpass we can write down the unit conversion factor analytically.
+        # For Jysr -> CMB:
+        self.UcJysr2CMB = 1.e20 / (common.B(nu2, 2.7255) - common.B(nu1, 2.7255))
+        
+        # For Jysr -> RJ
+        
+        
+        return
+    
+    def tearDown(self):
+        return
+    
+    def test_bandpass_convert_units(self):
+        Uc1 = common.bandpass_convert_units("K_CMB", self.simple_channel)
+        np.testing.assert_almost_equal(Uc1, self.UcJysr2CMB)
+        return
+
     
 def main():
     unittest.main()
