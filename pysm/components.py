@@ -409,6 +409,12 @@ class Dust(object):
             :return: maps produced using Hensley and Draine 2017 SED. 
 
             """
+
+            """The interpolation above is only valid for nu > 10GHz. Therefore for frequencies below this 
+            we implement a fudge and use the Rayleigh Jeans formula. The dust signal at this point should 
+            be negligible in any case. 
+            """                
+            
             #sort out various units of frequency and wavelength. Interpolation is done in wavelength and PySM
             #uses nu in GHz so we must convert from fequency in GHz to wavelength in microns for both the
             #evaluation frequencies and reference frequencies.
@@ -417,6 +423,35 @@ class Dust(object):
             lam_ref_I = nu_to_lambda(self.Nu_0_I)
             lam_ref_P = nu_to_lambda(self.Nu_0_P)
 
+            #nu_break is the lowest frequency in the interpolation files given for the HD17 model.
+            nu_break = 30.
+            #first deal with the case of frequencies below the interpolation range of the HD17 model.
+            #We do this by implementing RJ scaling below 30 GHz. In this region dust should be negligible
+            #in any case.
+            if (nu <= nu_break):                
+                #calculate the RJ scaling factor for frequencies below nu_break
+                RJ_factor = (nu / nu_break) ** 1.54
+                #calculate wavelength at the break frequency.
+                lam = nu_to_lambda(nu_break)
+                #calculate the HD17  model at the break frequencies. This is then scaled below nu_break
+                #using the RJ factor.
+                scaling_I = RJ_factor * convert_units("Jysr", "uK_RJ", nu_break) / convert_units("Jysr", "uK_RJ", self.Nu_0_I) *(
+                    (1. - self.F_fe) * sil_i.ev(self.Uval, lam)
+                    + self.Fcar * car_i.ev(self.Uval, lam)
+                    + self.F_fe * silfe_i.ev(self.Uval, lam) ) / (
+                        (1. - self.F_fe) * sil_i.ev(self.Uval, lam_ref_I)
+                        + self.Fcar * car_i.ev(self.Uval, lam_ref_I)
+                        + self.F_fe * silfe_i.ev(self.Uval, lam_ref_I)
+                    )
+                scaling_P = RJ_factor * convert_units("Jysr", "uK_RJ", nu_break) / convert_units("Jysr", "uK_RJ", self.Nu_0_P) *(
+                    (1. - self.F_fe) * sil_p.ev(self.Uval, lam)
+                    + self.Fcar * car_p.ev(self.Uval, lam)
+                    + self.F_fe * silfe_p.ev(self.Uval, lam)) / (
+                        (1. - self.F_fe) * sil_p.ev(self.Uval, lam_ref_P)
+                        + self.Fcar * car_p.ev(self.Uval, lam_ref_P)
+                        + self.F_fe * silfe_p.ev(self.Uval, lam_ref_P)
+                    )
+                return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
             
             #calculate the intensity scaling from reference frequency
             #self.Nu_0_I to frequency nu. Note that the values in brackets
