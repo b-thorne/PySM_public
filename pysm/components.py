@@ -949,7 +949,6 @@ def black_body(nu, nu_0, T):
     :return: float -- black body at temperature T scaling from frequency nu_0 to nu.
 
     """
-    exp = lambda x: np.exp(-constants.h * x * 1.e9 / constants.k / T)
     return B(nu, T) / B(nu_0, T)
 
 def get_decorrelation_matrices(freqs,freq_ref,corrlen) :
