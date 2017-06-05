@@ -18,7 +18,6 @@ class ComponentsTests(unittest.TestCase):
 
     def testBlack_Body(self):
         astropy = blackbody_nu(90.e9, 100.) / blackbody_nu(30.e9, 100.)
-        astropy *= common.convert_units("Jysr", "uK_RJ", 90.) / common.convert_units("Jysr", "uK_RJ", 30.)
         pysm = components.black_body(90., 30., 100.)
         self.assertAlmostEqual(astropy, pysm)
 

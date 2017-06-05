@@ -12,7 +12,7 @@ import os, sys, time
 import scipy.constants as constants
 from scipy.interpolate import interp1d, RectBivariateSpline
 from scipy.misc import factorial, comb
-from common import read_key, convert_units, FloatOrArray, invert_safe
+from common import read_key, convert_units, FloatOrArray, invert_safe, B
 from nominal import template
 
 class Synchrotron(object):
@@ -311,6 +311,10 @@ class Dust(object):
         """Returns dust (T, Q, U) maps as a function of frequency, nu.
         This is the simplest model, assuming a modified black body SED
         which is the same in temperature and polarisation.
+        Note that the spectral index map is expected to be the index
+        beta_d such that:
+        I_nu = (nu/nu_0)^beta_d B(nu, T)/B(nu_0, T),
+        in flux units. Therefore beta_d ~ 1.54.
 
         :return: function -- modified black body function.
 
@@ -325,8 +329,8 @@ class Dust(object):
             :return: modified black body scaling of maps, shape (3, Npix).
             
             """
-            scaling_I = power_law(nu, self.Nu_0_I, self.Spectral_Index) * black_body(nu, self.Nu_0_I, self.Temp)
-            scaling_P = power_law(nu, self.Nu_0_P, self.Spectral_Index) * black_body(nu, self.Nu_0_P, self.Temp)
+            scaling_I = power_law(nu, self.Nu_0_I, self.Spectral_Index - 2) * black_body(nu, self.Nu_0_I, self.Temp)
+            scaling_P = power_law(nu, self.Nu_0_P, self.Spectral_Index - 2) * black_body(nu, self.Nu_0_P, self.Temp)
             return np.array([self.A_I * scaling_I, self.A_Q * scaling_P, self.A_U * scaling_P])
         return model
 
@@ -946,7 +950,7 @@ def black_body(nu, nu_0, T):
 
     """
     exp = lambda x: np.exp(-constants.h * x * 1.e9 / constants.k / T)
-    return nu / nu_0 * exp(nu) / exp(nu_0) * (exp(nu_0) - 1.) / (exp(nu) - 1.)
+    return B(nu, T) / B(nu_0, T)
 
 def get_decorrelation_matrices(freqs,freq_ref,corrlen) :
     """Function to compute the mean and covariance for the decorrelation
