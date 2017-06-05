@@ -6,7 +6,7 @@ Most recent version available on [GitHub](https://github.com/bthorne93/PySM_publ
 **Contact**: ben.thorne@physics.ox.ac.uk
 
 If you use the code for any publications, please acknowledge it and cite:
-[B. Thorne, J. Dunkley, D. Alonso, S. Naess; The Python Sky Model: software for simulating the Galactic microwave sky. MNRAS (2017) 469 (3): 2821-2833]
+[B. Thorne, J. Dunkley, D. Alonso, S. Naess; The Python Sky Model: software for simulating the Galactic microwave sky; MNRAS (2017) 469 (3): 2821-2833.]
 
 This code generates full-sky simulations of Galactic foregrounds in intensity and
 polarization relevant for CMB experiments. Please see the documentation on
