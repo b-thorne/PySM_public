@@ -424,15 +424,18 @@ class Dust(object):
             lam_ref_P = nu_to_lambda(self.Nu_0_P)
 
             #nu_break is the lowest frequency in the interpolation files given for the HD17 model.
-            nu_break = 30.
+            nu_break = 10.
+            
             #first deal with the case of frequencies below the interpolation range of the HD17 model.
             #We do this by implementing RJ scaling below 30 GHz. In this region dust should be negligible
             #in any case.
             if (nu <= nu_break):                
                 #calculate the RJ scaling factor for frequencies below nu_break
                 RJ_factor = (nu / nu_break) ** 1.54
+                
                 #calculate wavelength at the break frequency.
                 lam = nu_to_lambda(nu_break)
+                
                 #calculate the HD17  model at the break frequencies. This is then scaled below nu_break
                 #using the RJ factor.
                 scaling_I = RJ_factor * convert_units("Jysr", "uK_RJ", nu_break) / convert_units("Jysr", "uK_RJ", self.Nu_0_I) *(
@@ -450,7 +453,7 @@ class Dust(object):
                         (1. - self.F_fe) * sil_p.ev(self.Uval, lam_ref_P)
                         + self.Fcar * car_p.ev(self.Uval, lam_ref_P)
                         + self.F_fe * silfe_p.ev(self.Uval, lam_ref_P)
-                    )
+                    )  
                 return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
             
             #calculate the intensity scaling from reference frequency
@@ -465,8 +468,8 @@ class Dust(object):
                 (1. - self.F_fe) * sil_i.ev(self.Uval, lam_ref_I)
                 + self.Fcar * car_i.ev(self.Uval, lam_ref_I)
                 + self.F_fe * silfe_i.ev(self.Uval, lam_ref_I)
-            )
-
+                )
+            
             #now calculate the polarisation scaling from reference
             #frequency self.Nu_0_P to frequency nu. Note that the values in brackets
             #are calculated in Jy/sr/Hz and PySM wants all scaling outputs
@@ -479,7 +482,7 @@ class Dust(object):
                 (1. - self.F_fe) * sil_p.ev(self.Uval, lam_ref_P)
                 + self.Fcar * car_p.ev(self.Uval, lam_ref_P)
                 + self.F_fe * silfe_p.ev(self.Uval, lam_ref_P)
-            )
+                )
             return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
         return model
     
