@@ -73,7 +73,8 @@ def d4(nside):
 def d5(nside):
     return [{
         'model' : 'hensley_draine_2017',
-        'uval' : read_map(template('HD17_U.fits'), nside, field = 0),
+        'draw_uval' : True,
+        'draw_uval_seed' : 4632,
         'fcar' : 1.,
         'f_fe' : 0.44,
         'nu_0_I' : 545.,
@@ -101,7 +102,8 @@ def d6(nside):
 def d7(nside):
     return [{
         'model' : 'hensley_draine_2017',
-        'uval' : read_map(template('HD17_U.fits'), nside, field = 0),
+        'draw_uval' : True,
+        'draw_uval_seed' : 4632,
         'fcar' : 1.,
         'f_fe' : 0.,
         'nu_0_I' : 545.,

@@ -183,7 +183,9 @@ class Dust(object):
     - `Nu_0_P` : reference frequency of Q and U template -- float.                                                     
     - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray, float.                                                                               
     - `Temp` : temperature template used in the modified black body scaling -- numpy.ndarray, float
-    - `Uval` : logarithm of the radiation field strength. Required by Henlsey Draine 2017.
+    - `Draw_Uval` : boolean, whether or not to draw a random realisation of Uval using Planck temperature and dust data. 
+    - `Draw_Uval_Seed` : seed for random realisations of the dust temperature and spectral index used to compute Uval if Draw_Uval = True.
+    - `Uval` : logarithm of the radiation field strength. Required by Henlsey Draine 2017 if draw_Uval=False.
     - `F_fe` : mass fraction of silicon grains with iron inclusions relative to total silicon grains.
     - `Fcar` : mass fraction of carbonaceous grains relative to silicate grains. Required by Hensley and Draine model.
     - `Add_Decorrelation` : add stochastic frequency decorrelation to the SED -- bool.
@@ -267,7 +269,11 @@ class Dust(object):
         except AttributeError:
             print("Dust attribute 'Uval' not set.")
             sys.exit(1)
-
+        
+    @Uval.setter
+    def Uval(self, value):
+        self.__uval = value
+        
     @property
     def Fcar(self):
         try:
@@ -292,6 +298,22 @@ class Dust(object):
             print("Dust attribute 'Corr_Len' not set.")
             sys.exit(1)
 
+    @property
+    def Draw_Uval(self):
+        try:
+            return self.__draw_uval
+        except AttributeError:
+            print("Dust attribute 'Draw_Uval' not set.")
+            sys.exit(1)
+
+    @property
+    def Draw_Uval_Seed(self):
+        try:
+            return self.__draw_uval_seed
+        except AttributeError:
+            print("Dust attribute 'Draw_Uval_Seed' not set.")
+            sys.exit(1)
+            
     @property
     def Add_Decorrelation(self):
         try:
@@ -347,40 +369,23 @@ class Dust(object):
         Must be between -3 and 5. U is the radiation field energy
         density relative to the MMP83 radiation field. So uval = -0.5
         corresponds to a radiation field 10^-0.5 times as intense as the
-        standard interstellar radiation field.
+        standard interstellar radiation field. 
 
         *Dust composition parameters*
 
         - fcar: Mass fraction of carbonaceous grains relative to silicate grains
-        - fsilfe: Mass fraction of silicate grains with iron inclusions relative
+        - f_fe: Fraction of silicate grains with iron inclusions relative
         to silicate grains.
 
         Model is calibrated such that fcar = 1 and fsilfe = 0 reproduce the Planck
         FIR dust SED. fcar = fsilfe >> 1 will also do so but with different
         frequency-dependence of the polarized dust emission. In general,
-        fcar =~ 1 + fsilfe is expected.
+        fcar =~ 1 + fsilfe is expected, meaning that: 1-f_fe + f_fe = f_car.
+        So  in the current implementation f_car should stay ~1.
 
         :return: function - model (T, Q, U) maps.
 
-        """
-
-        # Define some local constants in cgs units
-        # This should be changed in the future as it causes some conflicts
-        # at 1e-5 due to mismatch with other constants.
-        c = 2.99792458e10
-        h = 6.62606957e-27
-        k = 1.3806488e-16
-        T_CMB = 2.7255
-        
-        # Planck function
-        def B_nu (nu, T):
-            return 2.0 * h * (nu ** 3) / (c ** 2 * (np.expm1(h * nu / (k * T))))
-
-        # Conversion to K_CMB
-        def G_nu (nu, T):
-            x = h * nu / (k * T)
-            return B_nu(nu, T) * x * np.exp(x) / (np.expm1(x) * T)
-        
+        """        
         # Read in precomputed dust emission properties in infrared as a function of U
         # the radiation field strength for a given grain composition and grain size distribution.
         #data_sil contains the emission properties for silicon grains with no iron inclusions. 
@@ -395,14 +400,43 @@ class Dust(object):
 
         #interpolate the pre-computed solutions for the emissivity as a function of grain composition F_fe, Fcar, and
         #field strenth U, to get emissivity as a function of (U, wavelength).
-        sil_i = RectBivariateSpline(uvec, wav, (data_sil[:, 3 : 84] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
-        car_i = RectBivariateSpline(uvec, wav, (data_car[:, 3 : 84] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
-        silfe_i = RectBivariateSpline(uvec, wav, (data_silfe[:, 3 : 84] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
+        sil_i = RectBivariateSpline(uvec, wav, (data_sil[:, 3 : 84] * (wav[:, np.newaxis] * 1.e-6 / constants.c) * 1.e23).T) # to Jy/sr/H
+        car_i = RectBivariateSpline(uvec, wav, (data_car[:, 3 : 84] * (wav[:, np.newaxis] * 1.e-6 / constants.c) * 1.e23).T) # to Jy/sr/H
+        silfe_i = RectBivariateSpline(uvec, wav, (data_silfe[:, 3 : 84] * (wav[:, np.newaxis] * 1.e-6 / constants.c) * 1.e23).T) # to Jy/sr/H
 
-        sil_p = RectBivariateSpline(uvec, wav, (data_sil[:, 84 : 165] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
-        car_p = RectBivariateSpline(uvec, wav, (data_car[:, 84 : 165] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
-        silfe_p = RectBivariateSpline(uvec, wav, (data_silfe[:, 84 : 165] * (wav[:, np.newaxis] * 1.e-4 / c) * 1.e23).T) # to Jy/sr/H
+        sil_p = RectBivariateSpline(uvec, wav, (data_sil[:, 84 : 165] * (wav[:, np.newaxis] * 1.e-6 / constants.c) * 1.e23).T) # to Jy/sr/H
+        car_p = RectBivariateSpline(uvec, wav, (data_car[:, 84 : 165] * (wav[:, np.newaxis] * 1.e-6 / constants.c) * 1.e23).T) # to Jy/sr/H
+        silfe_p = RectBivariateSpline(uvec, wav, (data_silfe[:, 84 : 165] * (wav[:, np.newaxis] * 1.e-6 / constants.c) * 1.e23).T) # to Jy/sr/H
+
+        #now draw the random realisation of uval if draw_uval = true
+        if self.Draw_Uval:
+            #Use Planck MBB temperature data to draw realisations of the temperature and spectral
+            #index from normal distribution with mean equal to the maximum likelihood commander value,
+            # and standard deviation equal to the commander std. 
+            T_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 3)
+            T_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 5)
+            beta_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 6)
+            beta_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 8)
+
+            #draw the realisations
+            np.random.seed(self.Draw_Uval_Seed)
+            T = T_mean + np.random.randn(len(T_mean)) * T_std
+            beta = beta_mean + np.random.randn(len(beta_mean)) * beta_std
+            
+            #use modified stefan boltzmann law to relate radiation field strength to temperature and
+            #spectral index. Since the interpolated data is only valid for -3 < uval <5 we clip
+            #the generated values (the generated values are no where near these limits, but it is good
+            #to note this for the future). We then udgrade the uval map to whatever nside is being
+            #considered.Since nside is not a parameter Sky knows about we have to get it from
+            #A_I, which is not ideal. 
+            self.Uval = hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = hp.npix2nside(len(self.A_I)))
+            
+        elif not self.Draw_Uval:
+            pass
         
+        else:
+            print("Hensley_Draine_2017 model selected, but draw_uval not set. Set 'draw_uval' to True or False.")
+                        
         @Add_Decorrelation(self)
         @FloatOrArray
         def model(nu):
@@ -412,81 +446,54 @@ class Dust(object):
             :type nu: float.
             :return: maps produced using Hensley and Draine 2017 SED. 
 
-            """
+            """                
+            
+            #Interpolation is done in wavelength and PySMvuses nu in GHz so we must convert from fequency
+            #in GHz to wavelength in microns for both the evaluation frequencies and reference frequencies.
+            nu_to_lambda = lambda x: 1.e-3 * constants.c / x #Note this is in SI units.
+
+            #Define lambda functions for the evaluation of the intensity and polarisation models.
+            #Note that the HD model intepolates in units of Jysr, so we convert to uK_RJ to match the
+            #other scalings.
+            eval_HD17_I = lambda nu, nu_0: convert_units("Jysr", "uK_RJ", nu) / convert_units("Jysr", "uK_RJ", nu_0) *(
+                (1. - self.F_fe) * sil_i.ev(self.Uval, nu_to_lambda(nu))
+                + self.Fcar * car_i.ev(self.Uval, nu_to_lambda(nu))
+                + self.F_fe * silfe_i.ev(self.Uval, nu_to_lambda(nu)) ) / (
+                    (1. - self.F_fe) * sil_i.ev(self.Uval, nu_to_lambda(nu_0))
+                    + self.Fcar * car_i.ev(self.Uval, nu_to_lambda(nu_0))
+                    + self.F_fe * silfe_i.ev(self.Uval, nu_to_lambda(nu_0))
+                )
+            eval_HD17_P = lambda nu, nu_0: convert_units("Jysr", "uK_RJ", nu) / convert_units("Jysr", "uK_RJ", nu_0) *(
+                (1. - self.F_fe) * sil_p.ev(self.Uval, nu_to_lambda(nu))
+                + self.Fcar * car_p.ev(self.Uval, nu_to_lambda(nu))
+                + self.F_fe * silfe_p.ev(self.Uval, nu_to_lambda(nu)) ) / (
+                    (1. - self.F_fe) * sil_p.ev(self.Uval, nu_to_lambda(nu_0))
+                    + self.Fcar * car_p.ev(self.Uval, nu_to_lambda(nu_0))
+                    + self.F_fe * silfe_p.ev(self.Uval, nu_to_lambda(nu_0))
+                )
 
             """The interpolation above is only valid for nu > 10GHz. Therefore for frequencies below this 
             we implement a fudge and use the Rayleigh Jeans formula. The dust signal at this point should 
             be negligible in any case. 
-            """                
-            
-            #sort out various units of frequency and wavelength. Interpolation is done in wavelength and PySM
-            #uses nu in GHz so we must convert from fequency in GHz to wavelength in microns for both the
-            #evaluation frequencies and reference frequencies.
-            nu_to_lambda = lambda x: 1.e-5 * c / x # GHz to microns. Note this is in cgs units.
-            lam =  nu_to_lambda(nu)
-            lam_ref_I = nu_to_lambda(self.Nu_0_I)
-            lam_ref_P = nu_to_lambda(self.Nu_0_P)
-
-            #nu_break is the lowest frequency in the interpolation files given for the HD17 model.
+            nu_break is the lowest frequency in the interpolation files given for the HD17 model.
+            """
             nu_break = 10.
-            
-            #first deal with the case of frequencies below the interpolation range of the HD17 model.
-            #We do this by implementing RJ scaling below 30 GHz. In this region dust should be negligible
-            #in any case.
             if (nu <= nu_break):                
-                #calculate the RJ scaling factor for frequencies below nu_break
+                #calculate the RJ scaling factor for frequencies below nu_break. At these frequencies
+                #dust is largely irrelevant, and so we just use a constant spectral index of 1.54.
                 RJ_factor = (nu / nu_break) ** 1.54
                 
-                #calculate wavelength at the break frequency.
-                lam = nu_to_lambda(nu_break)
-                
-                #calculate the HD17  model at the break frequencies. This is then scaled below nu_break
-                #using the RJ factor.
-                scaling_I = RJ_factor * convert_units("Jysr", "uK_RJ", nu_break) / convert_units("Jysr", "uK_RJ", self.Nu_0_I) *(
-                    (1. - self.F_fe) * sil_i.ev(self.Uval, lam)
-                    + self.Fcar * car_i.ev(self.Uval, lam)
-                    + self.F_fe * silfe_i.ev(self.Uval, lam) ) / (
-                        (1. - self.F_fe) * sil_i.ev(self.Uval, lam_ref_I)
-                        + self.Fcar * car_i.ev(self.Uval, lam_ref_I)
-                        + self.F_fe * silfe_i.ev(self.Uval, lam_ref_I)
-                    )
-                scaling_P = RJ_factor * convert_units("Jysr", "uK_RJ", nu_break) / convert_units("Jysr", "uK_RJ", self.Nu_0_P) *(
-                    (1. - self.F_fe) * sil_p.ev(self.Uval, lam)
-                    + self.Fcar * car_p.ev(self.Uval, lam)
-                    + self.F_fe * silfe_p.ev(self.Uval, lam)) / (
-                        (1. - self.F_fe) * sil_p.ev(self.Uval, lam_ref_P)
-                        + self.Fcar * car_p.ev(self.Uval, lam_ref_P)
-                        + self.F_fe * silfe_p.ev(self.Uval, lam_ref_P)
-                    )  
+                #calculate the HD17  model at the break frequency.
+                scaling_I = RJ_factor * eval_HD17_I(nu_break, self.Nu_0_I)
+                scaling_P = RJ_factor * eval_HD17_P(nu_break, self.Nu_0_P)
+
                 return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
             
             #calculate the intensity scaling from reference frequency
-            #self.Nu_0_I to frequency nu. Note that the values in brackets
-            #are calculated in Jy/sr/Hz and PySM templates are all in
-            #uK_RJ, therefore we compute a unit conversion too.
-            #scaling_I = convert_units("Jysr", "uK_RJ", self.Nu_0_I) / convert_units("Jysr", "uK_RJ", nu) * (
-            scaling_I = convert_units("Jysr", "uK_RJ", nu) / convert_units("Jysr", "uK_RJ", self.Nu_0_I) *(
-                (1. - self.F_fe) * sil_i.ev(self.Uval, lam)
-                + self.Fcar * car_i.ev(self.Uval, lam)
-                + self.F_fe * silfe_i.ev(self.Uval, lam) ) / (
-                (1. - self.F_fe) * sil_i.ev(self.Uval, lam_ref_I)
-                + self.Fcar * car_i.ev(self.Uval, lam_ref_I)
-                + self.F_fe * silfe_i.ev(self.Uval, lam_ref_I)
-                )
-            
-            #now calculate the polarisation scaling from reference
-            #frequency self.Nu_0_P to frequency nu. Note that the values in brackets
-            #are calculated in Jy/sr/Hz and PySM wants all scaling outputs
-            #to be in uK_RJ, therefore we compute a unit conversion too.
-            #scaling_P = convert_units("Jysr", "uK_RJ", self.Nu_0_P) / convert_units("Jysr", "uK_RJ", nu) * (
-            scaling_P = convert_units("Jysr", "uK_RJ", nu) / convert_units("Jysr", "uK_RJ", self.Nu_0_P) *(
-                (1. - self.F_fe) * sil_p.ev(self.Uval, lam)
-                + self.Fcar * car_p.ev(self.Uval, lam)
-                + self.F_fe * silfe_p.ev(self.Uval, lam)) / (
-                (1. - self.F_fe) * sil_p.ev(self.Uval, lam_ref_P)
-                + self.Fcar * car_p.ev(self.Uval, lam_ref_P)
-                + self.F_fe * silfe_p.ev(self.Uval, lam_ref_P)
-                )
+            #self.Nu_0_I to frequency nu.
+            scaling_I = eval_HD17_I(nu, self.Nu_0_I)
+            scaling_P = eval_HD17_P(nu, self.Nu_0_P)
+
             return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
         return model
     
