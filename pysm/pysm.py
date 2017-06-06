@@ -433,7 +433,7 @@ class Instrument(object):
                 print("%07.2f | %05.2f | %05.2f | %05.2f "%(f, s_I, s_P, b))
 
         elif self.Use_Bandpass:
-            print("Channel name | sigma_I (uK_CMB amin) | sigma_P (uK_amin) | FWHM (arcmin) |")
+            print("Channel name | sigma_I (uK_CMB amin) | sigma_P (uK_CMB amin) | FWHM (arcmin) |")
             for cn, s_I, s_P, b in zip(self.Channel_Names, self.Sens_I, self.Sens_P, self.Beams):
                 print("%s | %05.2f | %05.2f | %05.2f "%(cn, s_I, s_P, b)) 
         return
