@@ -181,8 +181,8 @@ class Dust(object):
     - `A_U` : U template used -- numpy.ndarray, float.                                                               
     - `Nu_0_I` : reference frequency of I template -- float.                                                           
     - `Nu_0_P` : reference frequency of Q and U template -- float.                                                     
-    - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray, float.                                                                        
-    - `Temp` : temperature template used in the modified black body scaling -- numpy.ndarray, float
+    - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray, float.
+    - `Temp` : temperature template used in the modified black body scaling -- numpy.ndarray, float.
     - `Draw_Uval` : boolean, whether or not to draw a random realisation of Uval using Planck temperature and dust data. 
     - `Draw_Uval_Seed` : seed for random realisations of the dust temperature and spectral index used to compute Uval if Draw_Uval = True.
     - `Uval` : logarithm of the radiation field strength. Required by Henlsey Draine 2017 if draw_Uval=False.
