@@ -181,7 +181,7 @@ class Dust(object):
     - `A_U` : U template used -- numpy.ndarray, float.                                                               
     - `Nu_0_I` : reference frequency of I template -- float.                                                           
     - `Nu_0_P` : reference frequency of Q and U template -- float.                                                     
-    - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray, float.                                                                               
+    - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray, float.                                                                        
     - `Temp` : temperature template used in the modified black body scaling -- numpy.ndarray, float
     - `Draw_Uval` : boolean, whether or not to draw a random realisation of Uval using Planck temperature and dust data. 
     - `Draw_Uval_Seed` : seed for random realisations of the dust temperature and spectral index used to compute Uval if Draw_Uval = True.
@@ -190,8 +190,7 @@ class Dust(object):
     - `Fcar` : mass fraction of carbonaceous grains relative to silicate grains. Required by Hensley and Draine model.
     - `Add_Decorrelation` : add stochastic frequency decorrelation to the SED -- bool.
     - `Corr_Len` : correlation length to use in decorrelation model -- float.
-    
-
+   
     """
     def __init__(self, config):
         for k in config.keys():
