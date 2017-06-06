@@ -379,9 +379,9 @@ class Instrument(object):
             if not self.Use_Bandpass:
                 Uc_noise = np.array(convert_units("uK_CMB", self.Output_Units, self.Frequencies))
             elif self.Use_Bandpass:
-                # first convert noise to MJysr and then to the output units.
-                CMB2MJysr = map(lambda channel: 1. / bandpass_convert_units("uK_CMB", channel), self.Channels)
-                Uc_noise = np.array(map(lambda channel: bandpass_convert_units(self.Output_Units, channel), self.Channels))
+                # first convert noise to Jysr.
+                UC_noise = np.array(map(lambda channel: bandpass_convert_units(self.Output_Units, channel) /
+                                        bandpass_convert_units("uK_CMB", channel), self.Channels))
         elif not self.Add_Noise:
             Uc_noise = np.zeros_like(Uc_signal)
         return Uc_signal[:, None, None] * map_array, Uc_noise[:, None, None] * noise
