@@ -372,16 +372,15 @@ class Instrument(object):
             Uc_signal = np.array(convert_units("uK_RJ", self.Output_Units, self.Frequencies))
         elif self.Use_Bandpass:
             # In the case of a given bandpass we calculate the unit conversion as explained in the documentation
-            # of bandpass_convert_units.
+            # of bandpass_convert_units. 
             Uc_signal = np.array(map(lambda channel: bandpass_convert_units(self.Output_Units, channel), self.Channels))
         if self.Add_Noise:
             # If noise requested also multiple the calculated noise.
             if not self.Use_Bandpass:
                 Uc_noise = np.array(convert_units("uK_CMB", self.Output_Units, self.Frequencies))
             elif self.Use_Bandpass:
-                # first convert noise to Jysr.
-                UC_noise = np.array(map(lambda channel: bandpass_convert_units(self.Output_Units, channel) /
-                                        bandpass_convert_units("uK_CMB", channel), self.Channels))
+                # first convert noise to Jysr then apply the same unit conversion as used for the signal.
+                UC_noise = np.array(map(lambda channel: Uc_signal) / bandpass_convert_units("uK_CMB", channel), self.Channels))
         elif not self.Add_Noise:
             Uc_noise = np.zeros_like(Uc_signal)
         return Uc_signal[:, None, None] * map_array, Uc_noise[:, None, None] * noise
