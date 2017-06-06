@@ -9,7 +9,6 @@
 import numpy as np
 import healpy as hp
 import scipy.constants as constants
-import scipy.integrate
 import os, sys
 from components import Dust, Synchrotron, Freefree, AME, CMB
 from common import read_key, convert_units, bandpass_convert_units, check_lengths
@@ -300,9 +299,9 @@ class Instrument(object):
         if not self.Use_Bandpass:
             return signal(self.Frequencies)
         elif self.Use_Bandpass:
-            # convert to MJysr in order to integrate over bandpass
-            signal_MJysr = lambda nu: signal(nu) * convert_units("uK_RJ", "Jysr", nu)
-            return np.array(map(lambda (f, w): bandpass(f, w, signal_MJysr), self.Channels))
+            # convert to Jysr in order to integrate over bandpass
+            signal_Jysr = lambda nu: signal(nu) * convert_units("uK_RJ", "Jysr", nu)
+            return np.array(map(lambda (f, w): bandpass(f, w, signal_Jysr), self.Channels))
         else:
             print("Please set 'Use_Bandpass' for Instrument object.")
             sys.exit(1)
@@ -448,7 +447,7 @@ def bandpass(frequencies, weights, signal):
     """
     # check that the frequencies are evenly spaced.
     check_bpass_frequencies(frequencies)
-    frequency_separation = frequencies[1] - frequencies[0]
+    frequency_separation = (frequencies[1] - frequencies[0]) * 1.e9
     # normalise the weights and check that they integrate to 1.
     weights /= np.sum(weights * frequency_separation)
     check_bpass_weights_normalisation(weights, frequency_separation)

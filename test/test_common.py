@@ -193,11 +193,7 @@ class test_Bandpass_Convert_Units(unittest.TestCase):
         
         #for a tophat bandpass we can write down the unit conversion factor analytically.
         # For Jysr -> CMB:
-        self.UcJysr2CMB = 1.e20 / (common.B(nu2, 2.7255) - common.B(nu1, 2.7255))
-        
-        # For Jysr -> RJ
-        
-        
+        self.UcJysr2CMB = 1.e-26 / (common.B(nu2, 2.7255) - common.B(nu1, 2.7255))        
         return
     
     def tearDown(self):

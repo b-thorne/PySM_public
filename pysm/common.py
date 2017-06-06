@@ -245,6 +245,10 @@ def bandpass_convert_units(unit, channel):
     """
 
     (frequencies, weights) = channel
+
+    # normalise the weights and check that they integrate to 1.
+    weights /= scipy.integrate.simps(weights, frequencies)
+    
     #First do conversion of RJ, CMB, MJy
     if "CMB" in unit:
         prefac = 1. / scipy.integrate.simps(weights * K_CMB2Jysr(frequencies), frequencies)
