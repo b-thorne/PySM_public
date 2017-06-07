@@ -328,3 +328,44 @@ def tophat_bandpass(nu_c, delta_nu, samples = 50):
     freqs = np.linspace(nu_c - delta_nu / 2., nu_c + delta_nu / 2., samples)
     weights = np.ones_like(freqs) / (freqs.size * delta_nu / samples)
     return (freqs, weights)
+
+def plot_maps(ins_conf, plot_odir):
+    """Function to plot output maps for a given instrument configuration.
+
+    :param ins_conf: configuration file used to initialise the :class:`pysm.pysm.Instrument` used to generate the maps.
+    :type: dict
+    :param plot_odir: output directory to write maps to.
+    :type plot_odir: string
+    """
+    #get path to maps and define output plot path.
+    odir = os.path.abspath(plot_odir)
+    opath = os.path.join(odir, ins_conf.output_prefix+"_maps.pdf")
+
+    #get number of plots / 3
+    if ins_conf.Use_Bandpass:
+        N = len(ins_conf.Channel_Names)
+    else:
+        N = len(ins_conf.Frequencies)
+
+    #initialise figure
+    fig = plt.figure(1, figsize = (8, N*3))
+    def add_map(maps, i):
+        hp.mollview(maps[0], sub = (N, 3, i+1), fig = 1)
+        hp.mollview(maps[1], sub = (N, 3, i+1), fig = 1)
+        hp.mollview(maps[2], sub = (N, 3, i+1), fig = 1)
+        return
+
+    #do the plotting.
+    if not ins_conf.Use_Bandpass:
+        for i, f in enumerate(ins_conf.Frequencies):
+            m = hp.read_map(ins_conf.file_path(f = f, extra_info = "total"), field = (0, 1, 2))
+            add_map(m, i)
+            
+    elif self.Use_Bandpass:
+        for i in enumerate(ins_conf.Channel_Names):
+            m = hp.read_map(ins_conf.file_path(channel_name = c, extra_info = "total"), field = (0, 1, 2))
+            add_map(m, i)
+
+    fig.savefig(opath, bbox_inches = 'tight', background = 'white')
+
+    return fig
