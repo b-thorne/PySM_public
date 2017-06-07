@@ -366,8 +366,7 @@ class Dust(object):
 
         - log U (uval): Radiation field intensity parameter, sets grain temperatures. Must be between -3 and 5. U is the radiation field energy density relative to the MMP83 radiation field. So uval = -0.5 corresponds to a radiation field 10^-0.5 times as intense as the standard interstellar radiation field. 
         - fcar: Mass fraction of carbonaceous grains relative to silicate grains
-        - f_fe: Fraction of silicate grains with iron inclusions relative
-        to silicate grains.
+        - f_fe: Fraction of silicate grains with iron inclusions relative to silicate grains.
 
         Model is calibrated such that fcar = 1 and f_fe = 0 reproduce the Planck
         FIR dust SED. fcar = f_fe >> 1 will also do so but with different
