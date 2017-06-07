@@ -337,7 +337,7 @@ class Dust(object):
         I_nu = (nu/nu_0)^beta_d B(nu, T)/B(nu_0, T),
         in flux units. Therefore beta_d ~ 1.54.
 
-        :return: function -- modified black body function.
+        :return: function -- model (T, Q, U) maps.
 
         """
         @Add_Decorrelation(self)
@@ -364,20 +364,13 @@ class Dust(object):
 
         *Model Parameters*
 
-        - log U (uval): Radiation field intensity parameter, sets grain temperatures.
-        Must be between -3 and 5. U is the radiation field energy
-        density relative to the MMP83 radiation field. So uval = -0.5
-        corresponds to a radiation field 10^-0.5 times as intense as the
-        standard interstellar radiation field. 
-
-        *Dust composition parameters*
-
+        - log U (uval): Radiation field intensity parameter, sets grain temperatures. Must be between -3 and 5. U is the radiation field energy density relative to the MMP83 radiation field. So uval = -0.5 corresponds to a radiation field 10^-0.5 times as intense as the standard interstellar radiation field. 
         - fcar: Mass fraction of carbonaceous grains relative to silicate grains
         - f_fe: Fraction of silicate grains with iron inclusions relative
         to silicate grains.
 
-        Model is calibrated such that fcar = 1 and fsilfe = 0 reproduce the Planck
-        FIR dust SED. fcar = fsilfe >> 1 will also do so but with different
+        Model is calibrated such that fcar = 1 and f_fe = 0 reproduce the Planck
+        FIR dust SED. fcar = f_fe >> 1 will also do so but with different
         frequency-dependence of the polarized dust emission. In general,
         fcar =~ 1 + fsilfe is expected, meaning that: 1-f_fe + f_fe = f_car.
         So  in the current implementation f_car should stay ~1.
