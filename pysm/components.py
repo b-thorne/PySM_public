@@ -482,9 +482,14 @@ class Dust(object):
             
             #calculate the intensity scaling from reference frequency
             #self.Nu_0_I to frequency nu.
-            scaling_I = hp.ud_grade(eval_HD17_I(nu, self.Nu_0_I), nside_out = hp.npix2nside(len(self.A_I)))
-            scaling_P = hp.ud_grade(eval_HD17_P(nu, self.Nu_0_P), nside_out = hp.npix2nside(len(self.A_I)))
+            scaling_I = eval_HD17_I(nu, self.Nu_0_I)
+            scaling_P = eval_HD17_P(nu, self.Nu_0_P)
 
+            try: 
+                scaling_I = hp.ud_grade(scaling_I, nside_out = hp.npix2nside(len(self.A_I)))
+                scaling_P = hp.ud_grade(scaling_P, nside_out = hp.npix2nside(len(self.A_I)))
+            except IndexError:
+                pass
             return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
         return model
     
