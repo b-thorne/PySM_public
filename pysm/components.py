@@ -420,7 +420,7 @@ class Dust(object):
             #to note this for the future). We then udgrade the uval map to whatever nside is being
             #considered.Since nside is not a parameter Sky knows about we have to get it from
             #A_I, which is not ideal. 
-            self.Uval = hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = hp.npix2nside(len(self.A_I)))
+            self.Uval = hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = 16)
             
         elif not self.Draw_Uval:
             pass
@@ -482,8 +482,8 @@ class Dust(object):
             
             #calculate the intensity scaling from reference frequency
             #self.Nu_0_I to frequency nu.
-            scaling_I = eval_HD17_I(nu, self.Nu_0_I)
-            scaling_P = eval_HD17_P(nu, self.Nu_0_P)
+            scaling_I = hp.ud_grade(eval_HD17_I(nu, self.Nu_0_I), nside_out = hp.npix2nside(len(self.A_I)))
+            scaling_P = hp.ud_grade(eval_HD17_P(nu, self.Nu_0_P), nside_out = hp.npix2nside(len(self.A_I)))
 
             return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
         return model

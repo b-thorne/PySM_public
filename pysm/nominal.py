@@ -114,6 +114,22 @@ def d7(nside):
         'add_decorrelation' : False,
     }]
 
+def d8(nside):
+    return [{
+        'model' : 'hensley_draine_2017',
+        'draw_uval' : False,
+        'uval' : 0.2,
+        'draw_uval_seed' : 4632,
+        'fcar' : 1.,
+        'f_fe' : 0.44,
+        'nu_0_I' : 545.,
+        'nu_0_P' : 353.,
+        'A_I' : read_map(template('dust_t_new.fits'), nside, field = 0),
+        'A_Q' : read_map(template('dust_q_new.fits'), nside, field = 0),
+        'A_U' : read_map(template('dust_u_new.fits'), nside, field = 0),
+        'add_decorrelation' : False,
+    }]
+
 def s1(nside):
     return [{
         'model' : 'power_law',
