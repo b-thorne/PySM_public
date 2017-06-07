@@ -1,0 +1,141 @@
+\title{Unit conversion in PySM}
+\author{Ben Thorne}
+\date{\today}
+
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+PySM uses input templates specified in $\mu K_{\rm RJ}$, and scales them to other
+frequencies using scaling laws appropriate for $\mu K_{\rm RJ}$. This is fine in
+the case of delta-bandpasses, as frequency dependent unit conversions can be
+applied after scaling to produce the same result, no matter which unit the
+scaling was done in. However, for bandpass-integrated quantities, the matter of
+unit conversion requires a little clarification. Here we describe the procedure
+used in PySM.
+
+\section{Unit definitions}
+
+\subsection{$K_{\rm CMB}$}
+
+References: Dodelson page 380, Planck HFI Spectral response paper. 
+
+The spectrum of the CMB brightness is a black body, $B(\nu, T)$. This has been well measured,
+and is usually removed from observations of CMB anisotropies. The brightness of anisotropies
+have a different spectrum; they are small perturbations to the temperature of
+the CMB and so we can Taylor expand the black body function:
+\[
+B_{\rm anisotropy}(\nu, T + \Delta T) = B(\nu, T_{\rm CMB}) + \frac{\partial B(\nu, T)}{\partial T}
+\bigg\rvert_{T_{\rm CMB}\Delta T}
+\]
+As mentioned, we usually are not interested in the spectrum of the monopole,
+so we remove it:
+\[
+B_{\rm anisotropy}(\nu, T+\Delta T) = \frac{\partial B(\nu, T)}{\partial T}\bigg\rvert_{T_{\rm CMB}
+  \Delta T}.
+\]
+From now on we will write: $b^\prime_\nu \equiv \frac{\partial B(\nu, T)}{\partial T}\bigg\rvert_{T_{\rm CMB}}$.
+Given some observed signal, $I_\nu$, we then define the temperature in CMB units, $T_{\rm CMB}$, to be:
+\[
+T_{\rm CMB} b^\prime_\nu = I_\nu.   
+\]
+So an observation of the true CMB anisotropy spectrum is flat in CMB units.
+
+\subsection{$K_{\rm RJ}$}
+
+Rayleigh-Jeans units are often useful in radio astronomy as they are more human-readable than
+flux units. In the Rayleigh-Jeans limit the black body function is:
+\[
+B_{\rm RJ}(\nu, T) = \frac{2 k_B \nu^2 T}{c^2}
+\]
+We use this to define the Rayleight-Jeans temperature, $T_{\rm RJ}$, for a given observation of spectral
+radiance $I_\nu$ as:
+\[
+\frac{2 k_B \nu T_{\rm RJ}}{c^2} = I_\nu.
+\]
+
+\subsection{${\rm Jy / sr}$}
+The incident power on the detector in some band defined by the bandpass $\tau(\nu)$ is:
+\[
+P = \int_0^\infty d\nu \ \tau(\nu) I_\nu (A \Omega)_\nu.
+\]
+
+It is clear from this that the incident signal $I_\nu$ in SI units must have units of:
+$[{\rm W m^{-2}Hz^{-1} sr^{-1}}]$, in order for the RHS to give units of Watts. This is a flux density
+per unit solid angle.  We define the Jansky unit:
+\[
+1 {\rm Jy} = 10^{-26} \frac{{\rm W}}{{\rm m^2 Hz}},
+\]
+which is a unit of flux density, obtained by integrating over the source solid angle. This is
+therefore most appropriate for point sources. However, the Jansky can also be used to described
+surface brightness of extended sources by dividing by the source solid angle we consider (e.g.
+the beam of the telescope), hence the unit ${\rm Jy / sr}$.
+
+\section{Delta bandpasses}
+
+Converting between these units depends on frequency. In the case of a delta bandpass the frequency
+is obvious, and so we can evaluate the conversion factor simply. For example to convert a map
+in $\mu K_{\rm RJ}$ to $\mu K_{\rm CMB}$ we write:
+\[
+U_{\rm RJ \rightarrow CMB} T_{\rm RJ} = T_{\rm CMB} 
+\]
+so:
+\[
+\begin{aligned}
+  U_{\rm RJ \rightarrow CMB} &= \frac{I_\nu / b^\prime_\nu}{I_\nu / (\frac{2 k_B}{c^2})} \\
+  &= \frac{2 k_B / c^2}{b^\prime_\nu}
+\end{aligned}
+\]
+
+\section{Arbitrary bandpasses}
+
+When we integrate over a bandpass there is no longer an obvious frequency at which we should
+evaluate the freuqency dependent conversion factors. Furthermore, since the physical quantity
+we observe is the power hitting the detector, what does the CMB and RJ units even mean?
+
+To answer this let's consider the power hitting the detector, $i$, making a map, $m_i$:
+\[
+m_i = G_i \int^\infty_0 d\nu \ \tau(\nu) (A \Omega) I_\nu.
+\]
+Where $G$ is a detector-specific factor accouting for various effects, $\Omega$ is the solid
+angle subtended by the beam, and $A$ is the area of the detector. In this equation $I_\nu$ is
+in SI units, as we will have the power in Watts. We can amalgamate the factors that do not
+depend on frequency, and drop the $i$ subscript, since the weighted average
+of detector maps can be expressed in an equivalent form:
+\[
+m = A \int^\infty_0 d\nu \ \tau(\nu) I_\nu.
+\]
+In order to determine the value of the constant $A$ we need to calibrate, this is often
+done using the CMB dipole, meaning our map $m$ will be in units of CMB temperature. Assume
+that the observed source has a CMB dipole spectrum, then if we were to observe the true
+CMB our map should just be of the CMB temperature:
+\[
+T_{\rm CMB} =  A \int^\infty_0 d\nu \ \tau(\nu) T_{\rm CMB} b^\prime_\nu.
+\]
+So:
+\[
+A = 1 / \int^\infty_0 d\nu \ \tau(\nu) b^\prime_\nu.
+\]
+Therefore a map of the sky in CMB units is given by:
+\[
+m = \int^\infty_0 d\nu \ \tau(\nu) I_\nu / \int^\infty_0  d\nu \ \tau(\nu) b^\prime_\nu .
+\]
+At this point $I_\nu$ is in SI units, but since we will be simulating in ${\rm Jy/sr}$ we want
+to change this:
+\[
+m_{\rm CMB} =\frac{ \int^\infty_0 d\nu \ \tau(\nu) I^{\rm Jy/sr}_\nu d\nu}{ \int^\infty_0 \ \tau(\nu) 10^{-20} b^\prime_\nu}.
+\]
+By similar arguments:
+\[
+\begin{aligned}
+  m_{\rm RJ} &=\frac{ \int^\infty_0 d\nu \ \tau(\nu) I^{\rm Jy/sr}_\nu d\nu}{ \int^\infty_0 \ \tau(\nu) 10^{-20} \frac{2 k_B \nu^2}{c^2}} \\
+  m_{\rm Jy/sr} &= \int^\infty_0 d\nu \ \tau(\nu) I^{\rm Jy/sr}_\nu d\nu
+\end{aligned}
+\]
+For a given bandpass and output unit, PySM computes the appropriate integrals over unit conversions,
+computes the signal in ${\rm Jy/sr}$ over the bandpass and integrates this, and returns maps as defined
+here.
+\end{document}
