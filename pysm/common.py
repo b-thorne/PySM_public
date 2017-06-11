@@ -21,29 +21,22 @@ def FloatOrArray(model):
     :return: wrapped function -- function
 
     """
-    def decorator(nu):
+    def decorator(nu, **kwargs):
         """Evaluate if nu is a float."""
         try:
             nu_float = float(nu)
             nu_float = np.array(nu)
-            return model(nu_float) 
+            return model(nu_float, **kwargs) 
         except TypeError:
             try:
                 """If not float, check if nu is one dimensional"""
-                print nu
-                print "nu dimension:", nu.ndim
                 nu_1darray = np.asarray(nu)
-                print nu_1darray.ndim
-                print np.array(map(model, list(nu_1darray)))
                 if not (nu_1darray.ndim == 1):
                     print("Frequencies must be float or convertable to 1d array.")
                     sys.exit(1)
                     """If it is 1d array evaluate model function over all its elements."""
-                return np.array(map(model, list(nu_1darray)))
+                return np.array(map(lambda x: model(x, **kwargs), list(nu_1darray)))
             except ValueError:
-                print nu
-                print type(nu)
-                print nu.shape
                 """Fail if not convertable to 1d array"""
                 print("Frequencies must be either float or convertable to array.")
                 sys.exit(1)
@@ -334,6 +327,7 @@ def tophat_bandpass(nu_c, delta_nu, samples = 50):
     """
     freqs = np.linspace(nu_c - delta_nu / 2., nu_c + delta_nu / 2., samples)
     weights = np.ones_like(freqs) / (freqs.size * delta_nu / samples)
+    print np.sum(weights * delta_nu)
     return (freqs, weights)
 
 def plot_maps(ins_conf, plot_odir):

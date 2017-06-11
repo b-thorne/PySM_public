@@ -131,7 +131,7 @@ class Synchrotron(object):
 
         """
         @FloatOrArray
-        def model(nu):
+        def model(nu, **kwargs):
             """Power law scaling model. 
 
             :param nu: frequency at which to calculate the map.
@@ -155,7 +155,7 @@ class Synchrotron(object):
 
         """
         @FloatOrArray
-        def model(nu):
+        def model(nu, **kwargs):
             """Power law scaling model.
             :param nu: frequency at which to calculate the map.
             :type nu: float.
@@ -342,7 +342,7 @@ class Dust(object):
         """
         @Add_Decorrelation(self)
         @FloatOrArray
-        def model(nu):
+        def model(nu, **kwargs):
             """Black body model 
 
             :param nu: frequency at which to evaluate model.
@@ -355,7 +355,45 @@ class Dust(object):
             return np.array([self.A_I * scaling_I, self.A_Q * scaling_P, self.A_U * scaling_P])
         return model
 
-    def hensley_draine_2017(self):
+    @staticmethod
+    def draw_uval(seed, nside):
+        #Use Planck MBB temperature data to draw realisations of the temperature and spectral
+        #index from normal distribution with mean equal to the maximum likelihood commander value,
+        # and standard deviation equal to the commander std. 
+        T_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 3, verbose = False)
+        T_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 5, verbose = False)
+        beta_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 6, verbose = False)
+        beta_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 8, verbose = False)
+        
+        #draw the realisations
+        np.random.seed(seed)
+        T = T_mean + np.random.randn(len(T_mean)) * T_std
+        beta = beta_mean + np.random.randn(len(beta_mean)) * beta_std
+        
+        #use modified stefan boltzmann law to relate radiation field strength to temperature and
+        #spectral index. Since the interpolated data is only valid for -3 < uval <5 we clip
+        #the generated values (the generated values are no where near these limits, but it is good
+        #to note this for the future). We then udgrade the uval map to whatever nside is being
+        #considered.Since nside is not a parameter Sky knows about we have to get it from
+        #A_I, which is not ideal. 
+        return hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = nside)
+
+    @staticmethod
+    def read_hd_data():
+        # Read in precomputed dust emission properties in infrared as a function of U
+        # the radiation field strength for a given grain composition and grain size distribution.
+        #data_sil contains the emission properties for silicon grains with no iron inclusions. 
+        data_sil = np.genfromtxt(template("sil_fe00_2.0.dat"))
+        #data_silfe containts the emission properties for sillicon grains with 5% iron inclusions.
+        data_silfe = np.genfromtxt(template("sil_fe05_2.0.dat"))
+        #data_car contains the emission properties of carbonaceous grains. 
+        data_car = np.genfromtxt(template("car_1.0.dat"))
+        #get the wavelength and the set of field strengths over which these values were calculated.
+        wav = data_sil[:, 0]
+        uvec = np.arange(-3., 5.01, 0.1)
+        return data_sil, data_silfe, data_car, wav, uvec
+    
+    def hensley_draine_2017(self, *args, **kwargs):
         """Returns dust (T, Q, U) maps as a function of observing frequenvy in GHz, nu. Uses the Hensley and Draine 2017 model.
 
         This is based on a microphysical model of dust grains, taking into account the strength of the local radiation field, U, 
@@ -376,18 +414,8 @@ class Dust(object):
 
         :return: function - model (T, Q, U) maps.
 
-        """        
-        # Read in precomputed dust emission properties in infrared as a function of U
-        # the radiation field strength for a given grain composition and grain size distribution.
-        #data_sil contains the emission properties for silicon grains with no iron inclusions. 
-        data_sil = np.genfromtxt(template("sil_fe00_2.0.dat"))
-        #data_silfe containts the emission properties for sillicon grains with 5% iron inclusions.
-        data_silfe = np.genfromtxt(template("sil_fe05_2.0.dat"))
-        #data_car contains the emission properties of carbonaceous grains. 
-        data_car = np.genfromtxt(template("car_1.0.dat"))
-        #get the wavelength and the set of field strengths over which these values were calculated.
-        wav = data_sil[:, 0]
-        uvec = np.arange(-3., 5.01, 0.1)
+        """
+        data_sil, data_silfe, data_car, wav, uvec = self.read_hd_data()
 
         #interpolate the pre-computed solutions for the emissivity as a function of grain composition F_fe, Fcar, and
         #field strenth U, to get emissivity as a function of (U, wavelength).
@@ -401,43 +429,24 @@ class Dust(object):
 
         #now draw the random realisation of uval if draw_uval = true
         if self.Draw_Uval:
-            #Use Planck MBB temperature data to draw realisations of the temperature and spectral
-            #index from normal distribution with mean equal to the maximum likelihood commander value,
-            # and standard deviation equal to the commander std. 
-            T_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 3)
-            T_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 5)
-            beta_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 6)
-            beta_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 8)
-
-            #draw the realisations
-            np.random.seed(self.Draw_Uval_Seed)
-            T = T_mean + np.random.randn(len(T_mean)) * T_std
-            beta = beta_mean + np.random.randn(len(beta_mean)) * beta_std
-            
-            #use modified stefan boltzmann law to relate radiation field strength to temperature and
-            #spectral index. Since the interpolated data is only valid for -3 < uval <5 we clip
-            #the generated values (the generated values are no where near these limits, but it is good
-            #to note this for the future). We then udgrade the uval map to whatever nside is being
-            #considered.Since nside is not a parameter Sky knows about we have to get it from
-            #A_I, which is not ideal. 
-            self.Uval = hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = 16)
-            
+            self.Uval = self.draw_uval(self.Draw_Uval_Seed, hp.npix2nside(len(self.A_I)))
         elif not self.Draw_Uval:
             pass
-        
         else:
             print("Hensley_Draine_2017 model selected, but draw_uval not set. Set 'draw_uval' to True or False.")
                         
-        @Add_Decorrelation(self)
         @FloatOrArray
-        def model(nu):
+        def model(nu, **kwargs):
             """Model of Hensley and Draine 2017. 
 
             :param nu: frequency in GHz at which to evaluate the model. 
             :type nu: float.
             :return: maps produced using Hensley and Draine 2017 SED. 
 
-            """                
+            """
+            
+            if ('use_bandpass' in kwargs) and (kwargs['use_bandpass']):
+                return np.zeros((3, len(self.A_I)))
             
             #Interpolation is done in wavelength and PySMvuses nu in GHz so we must convert from fequency
             #in GHz to wavelength in microns for both the evaluation frequencies and reference frequencies.
@@ -627,7 +636,7 @@ class AME(object):
         :return: function -- AME spdust2 scaling as a function of frequency.
         """
         @FloatOrArray
-        def model(nu):
+        def model(nu, **kwargs):
             """Spdust2 unpolarised model.
 
             :param nu: frequency in GHz at which to calculate the AME maps using 
@@ -649,7 +658,7 @@ class AME(object):
         :return: function -- polarised spdust2 model as a function of frequency.
         """
         @FloatOrArray
-    	def model(nu):
+    	def model(nu, **kwargs):
             """We use input Q and U from dust templates in order to make the
             polarisation angle consistent after down or up grading
             resolution. Downgrading polarisatoin angle templates gives
@@ -737,7 +746,7 @@ class Freefree(object):
                                                                                            
         """
         @FloatOrArray
-	def model(nu):
+	def model(nu, **kwargs):
             """Power law scaling model.
 
             :param nu: frequency at which to calculate the map.                                                        
@@ -911,7 +920,7 @@ class CMB(object):
 	rm = apply_rotation(maps, rot)
 
         @FloatOrArray
-	def model(nu):
+	def model(nu, **kwargs):
 	    return np.array(rm) * convert_units("uK_CMB", "uK_RJ", nu)
 	return model
 
@@ -923,7 +932,7 @@ class CMB(object):
 
         """
         @FloatOrArray
-	def model(nu):
+	def model(nu, **kwargs):
 	    return np.array([self.A_I, self.A_Q, self.A_U]) * convert_units("uK_CMB", "uK_RJ", nu) 
         return model
 
@@ -1038,7 +1047,7 @@ def Add_Decorrelation(Component):
             once the add_decorrelation function is evaluated.
 
             """
-            def wrapper(nu):
+            def wrapper(nu, **kwargs):
                 N_freqs = len(nu)
                 rho_cov_I, rho_m_I = get_decorrelation_matrices(nu, Component.Nu_0_I, Component.Corr_Len)
                 rho_cov_P, rho_m_P = get_decorrelation_matrices(nu, Component.Nu_0_P, Component.Corr_Len)
@@ -1048,15 +1057,15 @@ def Add_Decorrelation(Component):
                 decorr[:, 0, None] = rho_m_I + extra_I[:, None]
                 decorr[:, 1, None] = rho_m_P + extra_P[:, None]
                 decorr[:, 2, None] = rho_m_P + extra_P[:, None]
-                return decorr[..., None] * model(nu)
+                return decorr[..., None] * model(nu, **kwargs)
             return wrapper
         return decorrelation
 
     else:
         """If decorrelation not required do nothing with the decorator."""
         def decorrelation(model):
-            def wrapper(nu):
-                return model(nu)
+            def wrapper(nu, **kwargs):
+                return model(nu, **kwargs)
             return wrapper
         return decorrelation
     

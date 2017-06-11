@@ -6,6 +6,7 @@
 .. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk> 
 """
 
+from scipy import interpolate, integrate
 import numpy as np
 import healpy as hp
 import scipy.constants as constants
@@ -65,6 +66,15 @@ class Sky(object):
             self.cmb = component_adder(CMB, self.Config['cmb'])
         if 'dust' in self.Components:
             self.dust = component_adder(Dust, self.Config['dust'])
+            # Here we add an exception for the HD_17 model. This model requires that for bandpass
+            # integration the model be inistialized knowing the bandpass specification, rather than
+            # just inidividual frequencies. Therefore we need to be able to call the model directly
+            # during the bandpass evaluation.
+            if self.Config['dust'][0]['model'] == 'hensley_draine_2017':
+                self.Uses_HD17 = True
+                self.HD_17_bpass = initialise_hd_dust_model_bandpass(self.dust, **self.Config['dust'][0])
+            else:
+                self.Uses_HD17 = False
         if 'synchrotron' in self.Components:
             self.synchrotron = component_adder(Synchrotron, self.Config['synchrotron'])
         if 'freefree' in self.Components:
@@ -74,13 +84,21 @@ class Sky(object):
         return 
 
     @property
+    def Uses_HD17(self):
+        return self.__uses_hd17
+
+    @Uses_HD17.setter
+    def Uses_HD17(self, value):
+        self.__uses_hd17 = value
+    
+    @property
     def Config(self):
         try:
             return self.__config
         except AttributeError:
             print("Sky attribute 'Config' not set.")
             sys.exit(1)
-    
+            
     @property
     def Components(self):
         try:
@@ -89,7 +107,7 @@ class Sky(object):
             print("Sky attribute 'Components' not set.")
             sys.exit(1)
 
-    def signal(self):
+    def signal(self, **kwargs):
         """Returns the sky as a function of frequency.
 
         This returns a function which is the sum of all the requested 
@@ -97,7 +115,7 @@ class Sky(object):
         def signal(nu):
             sig = 0.
             for component in self.Components:
-                sig += getattr(self, component)(nu)
+                sig += getattr(self, component)(nu, **kwargs)
             return sig
         return signal
 
@@ -132,18 +150,23 @@ class Instrument(object):
         """Specifies the attributes of the Instrument class."""
         for k in config.keys():
             read_key(self, k, config)
-        if not self.Use_Bandpass:
-            if not self.Use_Smoothing:
-                self.__beams = np.zeros(len(self.Frequencies))
-            if not self.Add_Noise:
-                self.__sens_I = np.zeros(len(self.Frequencies))
-                self.__sens_P = np.zeros(len(self.Frequencies))
+
+        #Get the number of channels of observations.
         if self.Use_Bandpass:
-            if not self.Use_Smoothing:
-                self.__beams = np.zeros(len(self.Channels))
-            if not self.Add_Noise:
-                self.__sens_I = np.zeros(len(self.Channels))
-                self.__sens_P = np.zeros(len(self.Channels))
+            N_channels = len(self.Channels)
+            #Whilst we are here let's normalise the bandpasses.
+            self.normalise_bandpass()
+        if not self.Use_Bandpass:
+            N_channels = len(self.Frequencies)
+
+        #If they are not specified, set the sensitivities and beams
+        #to zero, corresponding to noiseless and perfect-resolution
+        #observations.
+        if not self.Use_Smoothing:
+            self.Beams = np.zeros(N_channels)
+        if not self.Add_Noise:
+            self.Sens_I = np.zeros(N_channels)
+            self.Sens_P = np.zeros(N_channels)
         return
 
     @property
@@ -153,7 +176,7 @@ class Instrument(object):
         except AttributeError:
             print("Instrument attribute 'Frequencies' not set.")
             sys.exit(1)
-
+            
     @property
     def Channels(self):
         try:
@@ -161,7 +184,11 @@ class Instrument(object):
         except AttributeError:
             print("Instrument attribute 'Channels' not set.")
             sys.exit(1)
-            
+
+    @Channels.setter
+    def Channels(self, value):
+        self.__channels = value
+        
     @property
     def Beams(self):
         try:
@@ -169,6 +196,10 @@ class Instrument(object):
         except AttributeError:
             print("Instrument attribute 'Beams' not set.")
             sys.exit(1)
+
+    @Beams.setter
+    def Beams(self, value):
+        self.__beams = value
 
     @property
     def Sens_I(self):
@@ -178,6 +209,10 @@ class Instrument(object):
             print("Instrument attribute 'Sens_I' not set.")
             sys.exit(1)
 
+    @Sens_I.setter
+    def Sens_I(self, value):
+        self.__sens_I = value
+            
     @property
     def Sens_P(self):
         try:
@@ -185,6 +220,10 @@ class Instrument(object):
         except AttributeError:
             print("Instrument attribute 'Sens_P' not set.")
             sys.exit(1)
+
+    @Sens_P.setter
+    def Sens_P(self, value):
+        self.__sens_P = value
 
     @property
     def Nside(self):
@@ -277,16 +316,15 @@ class Instrument(object):
 
         """
         self.print_info()
-        
         signal = Sky.signal()
-        output = self.apply_bandpass(signal) 
+        output = self.apply_bandpass(signal, Sky) 
         output = self.smoother(output)
         noise = self.noiser()
         output, noise = self.unit_converter(output, noise)
         self.writer(output, noise)
         return 
         
-    def apply_bandpass(self, signal):
+    def apply_bandpass(self, signal, Sky):
         """Function to integrate signal over a bandpass.  Frequencies must be
         evenly spaced, if they are not the function will object. Weights
         must be normalisable.
@@ -299,12 +337,32 @@ class Instrument(object):
         if not self.Use_Bandpass:
             return signal(self.Frequencies)
         elif self.Use_Bandpass:
+            #First need to tell the Sky class that we are using bandpass and if we are using the HD17 model.
+            bpass_signal = Sky.signal(use_bandpass = Sky.Uses_HD17)
             # convert to Jysr in order to integrate over bandpass
-            signal_Jysr = lambda nu: signal(nu) * convert_units("uK_RJ", "Jysr", nu)
-            return np.array(map(lambda (f, w): bandpass(f, w, signal_Jysr), self.Channels))
+            signal_Jysr = lambda nu: bpass_signal(nu) * convert_units("uK_RJ", "Jysr", nu)
+            bpass_integrated = np.array(map(lambda (f, w): bandpass(f, w, signal_Jysr), self.Channels))
+            # We now add an exception in for the case of the HD_17 model. This requires that the model be initialised
+            # with the bandpass information in order for the model to be computaitonally efficient. Therefore this is
+            # evaluated differently from other models. The function HD_17_bandpass() accepts a tuple (freqs, weights)
+            # and returns the integrated signal in units of Jysr. Note that it was initialised when the Instrument
+            # class was first instantiated, if use_bandpass = True. Note that the dust signal will still contribute
+            # to the bpass_integrated sum in the evaluation above, but will be zero.
+            if Sky.Uses_HD17:
+                bpass_integrated += np.array(map(Sky.HD_17_bpass, self.Channels))
+            return bpass_integrated
         else:
             print("Please set 'Use_Bandpass' for Instrument object.")
             sys.exit(1)
+
+    def normalise_bandpass(self):
+        """Function to normalise input bandpasses such that they integrate to one 
+        over the stated frequency range.
+
+        """
+        norm = lambda (freqs, weights): (freqs, weights / np.trapz(weights, freqs * 1.e9))
+        self.Channels = map(norm, self.Channels)
+        return 
             
     def smoother(self, map_array):
         """Function to smooth an array of N (T, Q, U) maps with N beams in
@@ -453,7 +511,8 @@ def bandpass(frequencies, weights, signal):
     # define the integration: integrand = signal(nu) * w(nu) * d(nu)
     # signal is already in MJysr.
     return sum(map(lambda (nu, w): signal(nu) * w * frequency_separation, zip(frequencies, weights)))
-    
+
+
 def check_bpass_weights_normalisation(weights, spacing):
     """Function that checks the weights of the bandpass were normalised
     properly.
@@ -485,7 +544,7 @@ def check_bpass_frequencies(frequencies):
             sys.exit(1) 
     return
 
-def component_adder(component_class, dictionary_list):
+def component_adder(component_class, dictionary_list, **kwargs):
     """This function adds instances of a component class to a Sky
     attribute for that component, e.g. Sky.Dust, thereby allowing for
     multiple populations of that component to be simulated.
@@ -496,16 +555,97 @@ def component_adder(component_class, dictionary_list):
     # each dictionary is a configuration dict used to
     # instantiate the component's class. We then take the
     # signal produced by that population.
-    population_signals = map(lambda dic: component_class(dic).signal(), dictionary_list)
+    population_signals = map(lambda dic: component_class(dic).signal(**kwargs), dictionary_list)
     # sigs is now a list of functions. Each function is the emission
     # due to a population of the component.
-    def total_signal(nu):
+    def total_signal(nu, **kwargs):
         total_component_signal = 0
         # now sum up the contributions of each population at
         # frequency nu. 
         for population_signal in population_signals:
-            total_component_signal += population_signal(nu)
+            total_component_signal += population_signal(nu, **kwargs)
         return total_component_signal
     # return the total contribution from all populations
     # as a function of frequency nu. 
     return total_signal
+
+def initialise_hd_dust_model_bandpass(hd_unint_signal, **kwargs):
+    """Function to initialise the bandpass-integrated
+    version of the Hensley-Draine 2017 model.
+    The keyword arguments are expected to be the initialisation
+    dictionary for the HD dust component.
+
+    :param hd_unint_signal: signal of the un-integrated HD17 model. 
+    :type hd_unint_signal: function
+
+    """
+    #Draw map of uval using Commander dust data.
+    uval = Dust.draw_uval(kwargs['draw_uval_seed'], hp.npix2nside(len(kwargs['A_I'])))
+
+    #Read in the precomputed dust emission spectra as a function of lambda and U.
+    data_sil, data_silfe, data_car, wav, uvec = Dust.read_hd_data()
+
+    c = 2.99792458e10
+    fcar = kwargs['fcar']
+    f_fe = kwargs['f_fe']
+
+    #Interpolate the dust emission properties in uval and freuency, this is necessary to compute the factor to
+    #rescale the dust emission templates to the new model.
+    sil_i = interpolate.RectBivariateSpline(uvec,wav,(data_sil[:,3:84]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
+    car_i = interpolate.RectBivariateSpline(uvec,wav,(data_car[:,3:84]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
+    silfe_i = interpolate.RectBivariateSpline(uvec,wav,(data_silfe[:,3:84]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
+    
+    sil_p = interpolate.RectBivariateSpline(uvec,wav,(data_sil[:,84:165]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
+    car_p = interpolate.RectBivariateSpline(uvec,wav,(data_car[:,84:165]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
+    silfe_p = interpolate.RectBivariateSpline(uvec,wav,(data_silfe[:,84:165]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
+
+    nu_to_lambda = lambda x: 1.e-3 * constants.c / x #Note this is in SI units.
+    non_int_model_i = lambda nu: (1. - f_fe) * sil_i.ev(uval, nu_to_lambda(nu)) + fcar * car_i.ev(uval, nu_to_lambda(nu)) + f_fe * silfe_i.ev(uval, nu_to_lambda(nu))
+    non_int_model_p = lambda nu: (1. - f_fe) * sil_p.ev(uval, nu_to_lambda(nu)) + fcar * car_p.ev(uval, nu_to_lambda(nu)) + f_fe * silfe_p.ev(uval, nu_to_lambda(nu)) 
+        
+    A_I = kwargs['A_I'] * convert_units("uK_RJ", "Jysr", kwargs['nu_0_I']) / non_int_model_i(kwargs['nu_0_I'])
+    A_Q = kwargs['A_Q'] * convert_units("uK_RJ", "Jysr", kwargs['nu_0_P']) / non_int_model_p(kwargs['nu_0_P'])
+    A_U = kwargs['A_U'] * convert_units("uK_RJ", "Jysr", kwargs['nu_0_P']) / non_int_model_p(kwargs['nu_0_P'])
+    
+    def bpass_model(channel):
+        """Note that nu is in GHz, and so we have to multipl by 1.e9 in the following functions.
+        """
+        (nu, t_nu) = channel
+                
+        # Integrate table over bandpass.
+        sil_i_vec = np.zeros(len(uvec))
+        car_i_vec = np.zeros(len(uvec))
+        silfe_i_vec = np.zeros(len(uvec))
+        sil_p_vec = np.zeros(len(uvec))
+        car_p_vec = np.zeros(len(uvec))
+        silfe_p_vec = np.zeros(len(uvec))
+        for i in range(len(uvec)):
+            # Note: Table in terms of wavelength in um, increasing
+            #       and lambda*I_lambda. Thus we reverse the order
+            #       to nu increasing before interpolating to the
+            #       bandpass frequencies, then divide by nu to get
+            #       I_nu.
+            sil_i_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_sil[::-1,3+i]*1.e23)/nu*1.e-9, nu*1.e9)
+            car_i_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_car[::-1,3+i]*1.e23)/nu*1.e-9, nu*1.e9)
+            silfe_i_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_silfe[::-1,3+i]*1.e23)/nu*1.e-9, nu*1.e9)
+        
+            sil_p_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_sil[::-1,84+i]*1.e23)/nu*1.e-9, nu*1.e9)
+            car_p_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_car[::-1,84+i]*1.e23)/nu*1.e-9, nu*1.e9)
+            silfe_p_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_silfe[::-1,84+i]*1.e23)/nu*1.e-9, nu*1.e9)
+
+        # Step 2: Interpolate over U values
+        sil_i = interpolate.interp1d(uvec, sil_i_vec)
+        car_i = interpolate.interp1d(uvec, car_i_vec)
+        silfe_i = interpolate.interp1d(uvec, silfe_i_vec)
+        
+        sil_p = interpolate.interp1d(uvec, sil_p_vec)
+        car_p = interpolate.interp1d(uvec, car_p_vec)
+        silfe_p = interpolate.interp1d(uvec, silfe_p_vec)
+
+        #We now compute the final scaling. The integrated quantities sil_i,
+        #car_i silfe_i etc.. are in Jy/sr. Therefore we want to convert the
+        #templates from uK_RJ to Jy/sr.
+        scaling_I = ((1. - f_fe) * sil_i(uval) + fcar * car_i(uval) + f_fe * silfe_i(uval))
+        scaling_P = ((1. - f_fe) * sil_p(uval) + fcar * car_p(uval) + f_fe * silfe_p(uval))
+        return np.array([scaling_I * A_I, scaling_P * A_Q, scaling_P * A_U])
+    return bpass_model
