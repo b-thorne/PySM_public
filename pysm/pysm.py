@@ -402,6 +402,7 @@ class Instrument(object):
             equal to the number of input maps."""
             sigma_pix_I = np.sqrt(self.Sens_I ** 2 / pix_amin2)
             sigma_pix_P = np.sqrt(self.Sens_P ** 2 / pix_amin2)
+            np.random.seed(seed = self.Noise_Seed)
             noise = np.random.randn(len(self.Sens_I), 3, npix)
             noise[:, 0, :] *= sigma_pix_I[:, None]
             noise[:, 1, :] *= sigma_pix_P[:, None]
@@ -460,6 +461,8 @@ class Instrument(object):
         if not self.Use_Bandpass:
             if self.Add_Noise:
                 for f, o, n in zip(self.Frequencies, output, noise):
+                    print np.std(n, axis = 1)# * np.sqrt(4. * np.pi / float(hp.nside2npix(128)) * (180. * 60. / np.pi) ** 2)
+                    print np.std(o, axis = 1)
                     hp.write_map(self.file_path(f = f, extra_info = "noise"), n)
                     hp.write_map(self.file_path(f = f, extra_info = "total"), o + n)
             elif not self.Add_Noise:
