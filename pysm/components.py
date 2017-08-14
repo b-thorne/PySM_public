@@ -1,9 +1,9 @@
-"""                                                                                            
+"""
 .. module:: components
    :platform: Unix
    :synopsis: module containing definitions of component objects in pysm.
 
-.. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk>                                       
+.. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk>
 """
 
 import numpy as np
@@ -16,14 +16,14 @@ from common import read_key, convert_units, FloatOrArray, invert_safe, B
 from nominal import template
 
 class Synchrotron(object):
-    """Class defining attributes and scaling laws of the synchrotron 
+    """Class defining attributes and scaling laws of the synchrotron
     component, instantiated with a configuration dictionary containing
     the required parameters of the synchrotron models. The key
-    item pairs are then assigned as attributes. 
+    item pairs are then assigned as attributes.
 
     The current possible attributes are:
 
-    - `Model` : SED used, power law or curved power law. 
+    - `Model` : SED used, power law or curved power law.
     - `A_I` : intensity template used -- numpy.ndarray or float.
     - `A_Q` : Q template used -- numpy.ndarray or float.
     - `A_U` : U template used -- numpy.ndarray or float.
@@ -37,7 +37,7 @@ class Synchrotron(object):
     def __init__(self, config):
         for k in config.keys():
             read_key(self, k, config)
-        return 
+        return
 
     @property
     def Model(self):
@@ -110,7 +110,7 @@ class Synchrotron(object):
         except AttributeError:
             print("Synchrotron attribute 'Nu_Curve' not set.")
             sys.exit(1)
-            
+
     def signal(self):
         """Function to return the selected SED.
 
@@ -118,10 +118,10 @@ class Synchrotron(object):
 
         """
         return getattr(self, self.Model)()
-    
+
     def power_law(self):
-        """Returns synchrotron (T, Q, U) maps as a function of observation 
-        freuency, nu. 
+        """Returns synchrotron (T, Q, U) maps as a function of observation
+        freuency, nu.
 
         This is the simplest model, using only a power law spectral
         dependence.  The map of the spectral index may be a constant
@@ -132,7 +132,7 @@ class Synchrotron(object):
         """
         @FloatOrArray
         def model(nu, **kwargs):
-            """Power law scaling model. 
+            """Power law scaling model.
 
             :param nu: frequency at which to calculate the map.
             :type nu: float.
@@ -143,15 +143,15 @@ class Synchrotron(object):
             scaling_P = power_law(nu, self.Nu_0_P, self.Spectral_Index)
             return np.array([self.A_I * scaling_I, self.A_Q * scaling_P, self.A_U * scaling_P])
         return model
-    
+
     def curved_power_law(self):
         """Returns synchrotron (T, Q, U) maps as a function of observation
-        frequency, nu. 
+        frequency, nu.
 
         This model allows for curvature of the power law SED. The
         spectral curvature be a constant, or a map.
 
-        :return: power law model -- function 
+        :return: power law model -- function
 
         """
         @FloatOrArray
@@ -159,38 +159,38 @@ class Synchrotron(object):
             """Power law scaling model.
             :param nu: frequency at which to calculate the map.
             :type nu: float.
-            :return: power law scaled maps, shape (3, Npix) -- numpy.ndarray shape                                                                                                               
+            :return: power law scaled maps, shape (3, Npix) -- numpy.ndarray shape
             """
             curvature_term = np.log(power_law(nu, self.Nu_Curve, self.Spectral_Curvature))
             scaling_I = power_law(nu, self.Nu_0_I, self.Spectral_Index + curvature_term)
             scaling_P = power_law(nu, self.Nu_0_P, self.Spectral_Index + curvature_term)
             return np.array([self.A_I * scaling_I, self.A_Q * scaling_P, self.A_U * scaling_P])
         return model
-    
+
 class Dust(object):
-    """Class defining attributes and scaling laws of the dust                                                   
-    component, instantiated with a configuration dictionary containing                                                 
-    the required parameters of the synchrotron models. The key                                                         
-    item pairs are then assigned as attributes.                                                                        
-                                                                                                                       
-    The current possible attributes are:                                                                               
-                                                                                                                       
+    """Class defining attributes and scaling laws of the dust
+    component, instantiated with a configuration dictionary containing
+    the required parameters of the synchrotron models. The key
+    item pairs are then assigned as attributes.
+
+    The current possible attributes are:
+
     - `Model` : SED used, modified black body, Hensley and Draine 2017.
-    - `A_I` : intensity template used -- numpy.ndarray, float.                                                       
-    - `A_Q` : Q template used -- numpy.ndarray, float.                                                               
-    - `A_U` : U template used -- numpy.ndarray, float.                                                               
-    - `Nu_0_I` : reference frequency of I template -- float.                                                           
-    - `Nu_0_P` : reference frequency of Q and U template -- float.                                                     
+    - `A_I` : intensity template used -- numpy.ndarray, float.
+    - `A_Q` : Q template used -- numpy.ndarray, float.
+    - `A_U` : U template used -- numpy.ndarray, float.
+    - `Nu_0_I` : reference frequency of I template -- float.
+    - `Nu_0_P` : reference frequency of Q and U template -- float.
     - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray, float.
     - `Temp` : temperature template used in the modified black body scaling -- numpy.ndarray, float.
-    - `Draw_Uval` : boolean, whether or not to draw a random realisation of Uval using Planck temperature and dust data. 
+    - `Draw_Uval` : boolean, whether or not to draw a random realisation of Uval using Planck temperature and dust data.
     - `Draw_Uval_Seed` : seed for random realisations of the dust temperature and spectral index used to compute Uval if Draw_Uval = True.
     - `Uval` : logarithm of the radiation field strength. Required by Henlsey Draine 2017 if draw_Uval=False.
     - `F_fe` : mass fraction of silicon grains with iron inclusions relative to total silicon grains.
     - `Fcar` : mass fraction of carbonaceous grains relative to silicate grains. Required by Hensley and Draine model.
     - `Add_Decorrelation` : add stochastic frequency decorrelation to the SED -- bool.
     - `Corr_Len` : correlation length to use in decorrelation model -- float.
-   
+
     """
     def __init__(self, config):
         for k in config.keys():
@@ -268,11 +268,11 @@ class Dust(object):
         except AttributeError:
             print("Dust attribute 'Uval' not set.")
             sys.exit(1)
-        
+
     @Uval.setter
     def Uval(self, value):
         self.__uval = value
-        
+
     @property
     def Fcar(self):
         try:
@@ -312,7 +312,7 @@ class Dust(object):
         except AttributeError:
             print("Dust attribute 'Draw_Uval_Seed' not set.")
             sys.exit(1)
-            
+
     @property
     def Add_Decorrelation(self):
         try:
@@ -320,14 +320,14 @@ class Dust(object):
         except AttributeError:
             print("Dust attribute 'Add_Decorrelation' not set.")
             sys.exit(1)
-            
+
     def signal(self):
         """Function to return the selected SED.
-        
+
         :return: function -- selected scaling model.
         """
         return getattr(self, self.Model)()
-    
+
     def modified_black_body(self):
         """Returns dust (T, Q, U) maps as a function of frequency, nu.
         This is the simplest model, assuming a modified black body SED
@@ -343,12 +343,12 @@ class Dust(object):
         @Add_Decorrelation(self)
         @FloatOrArray
         def model(nu, **kwargs):
-            """Black body model 
+            """Black body model
 
             :param nu: frequency at which to evaluate model.
             :type nu: float.
             :return: modified black body scaling of maps, shape (3, Npix).
-            
+
             """
             scaling_I = power_law(nu, self.Nu_0_I, self.Spectral_Index - 2) * black_body(nu, self.Nu_0_I, self.Temp)
             scaling_P = power_law(nu, self.Nu_0_P, self.Spectral_Index - 2) * black_body(nu, self.Nu_0_P, self.Temp)
@@ -359,50 +359,50 @@ class Dust(object):
     def draw_uval(seed, nside):
         #Use Planck MBB temperature data to draw realisations of the temperature and spectral
         #index from normal distribution with mean equal to the maximum likelihood commander value,
-        # and standard deviation equal to the commander std. 
+        # and standard deviation equal to the commander std.
         T_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 3, verbose = False)
         T_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 5, verbose = False)
         beta_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 6, verbose = False)
         beta_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 8, verbose = False)
-        
+
         #draw the realisations
         np.random.seed(seed)
         T = T_mean + np.random.randn(len(T_mean)) * T_std
         beta = beta_mean + np.random.randn(len(beta_mean)) * beta_std
-        
+
         #use modified stefan boltzmann law to relate radiation field strength to temperature and
         #spectral index. Since the interpolated data is only valid for -3 < uval <5 we clip
         #the generated values (the generated values are no where near these limits, but it is good
         #to note this for the future). We then udgrade the uval map to whatever nside is being
         #considered.Since nside is not a parameter Sky knows about we have to get it from
-        #A_I, which is not ideal. 
+        #A_I, which is not ideal.
         return hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = nside)
 
     @staticmethod
     def read_hd_data():
         # Read in precomputed dust emission properties in infrared as a function of U
         # the radiation field strength for a given grain composition and grain size distribution.
-        #data_sil contains the emission properties for silicon grains with no iron inclusions. 
+        #data_sil contains the emission properties for silicon grains with no iron inclusions.
         data_sil = np.genfromtxt(template("sil_fe00_2.0.dat"))
         #data_silfe containts the emission properties for sillicon grains with 5% iron inclusions.
         data_silfe = np.genfromtxt(template("sil_fe05_2.0.dat"))
-        #data_car contains the emission properties of carbonaceous grains. 
+        #data_car contains the emission properties of carbonaceous grains.
         data_car = np.genfromtxt(template("car_1.0.dat"))
         #get the wavelength and the set of field strengths over which these values were calculated.
         wav = data_sil[:, 0]
         uvec = np.arange(-3., 5.01, 0.1)
         return data_sil, data_silfe, data_car, wav, uvec
-    
+
     def hensley_draine_2017(self, *args, **kwargs):
         """Returns dust (T, Q, U) maps as a function of observing frequenvy in GHz, nu. Uses the Hensley and Draine 2017 model.
 
-        This is based on a microphysical model of dust grains, taking into account the strength of the local radiation field, U, 
-        the grain compositions (carbonaceous, and silicate with varying degrees of iron abundance) and solving for the 
-        full temperature distribution with grain size. 
+        This is based on a microphysical model of dust grains, taking into account the strength of the local radiation field, U,
+        the grain compositions (carbonaceous, and silicate with varying degrees of iron abundance) and solving for the
+        full temperature distribution with grain size.
 
         *Model Parameters*
 
-        - log U (uval): Radiation field intensity parameter, sets grain temperatures. Must be between -3 and 5. U is the radiation field energy density relative to the MMP83 radiation field. So uval = -0.5 corresponds to a radiation field 10^-0.5 times as intense as the standard interstellar radiation field. 
+        - log U (uval): Radiation field intensity parameter, sets grain temperatures. Must be between -3 and 5. U is the radiation field energy density relative to the MMP83 radiation field. So uval = -0.5 corresponds to a radiation field 10^-0.5 times as intense as the standard interstellar radiation field.
         - fcar: Mass fraction of carbonaceous grains relative to silicate grains
         - f_fe: Fraction of silicate grains with iron inclusions relative to silicate grains.
 
@@ -434,20 +434,20 @@ class Dust(object):
             pass
         else:
             print("Hensley_Draine_2017 model selected, but draw_uval not set. Set 'draw_uval' to True or False.")
-                        
+
         @FloatOrArray
         def model(nu, **kwargs):
-            """Model of Hensley and Draine 2017. 
+            """Model of Hensley and Draine 2017.
 
-            :param nu: frequency in GHz at which to evaluate the model. 
+            :param nu: frequency in GHz at which to evaluate the model.
             :type nu: float.
-            :return: maps produced using Hensley and Draine 2017 SED. 
+            :return: maps produced using Hensley and Draine 2017 SED.
 
             """
-            
+
             if ('use_bandpass' in kwargs) and (kwargs['use_bandpass']):
                 return np.zeros((3, len(self.A_I)))
-            
+
             #Interpolation is done in wavelength and PySMvuses nu in GHz so we must convert from fequency
             #in GHz to wavelength in microns for both the evaluation frequencies and reference frequencies.
             nu_to_lambda = lambda x: 1.e-3 * constants.c / x #Note this is in SI units.
@@ -472,17 +472,17 @@ class Dust(object):
                     + self.F_fe * silfe_p.ev(self.Uval, nu_to_lambda(nu_0))
                 )
 
-            """The interpolation above is only valid for nu > 10GHz. Therefore for frequencies below this 
-            we implement a fudge and use the Rayleigh Jeans formula. The dust signal at this point should 
-            be negligible in any case. 
+            """The interpolation above is only valid for nu > 10GHz. Therefore for frequencies below this
+            we implement a fudge and use the Rayleigh Jeans formula. The dust signal at this point should
+            be negligible in any case.
             nu_break is the lowest frequency in the interpolation files given for the HD17 model.
             """
             nu_break = 10.
-            if (nu <= nu_break):                
+            if (nu <= nu_break):
                 #calculate the RJ scaling factor for frequencies below nu_break. At these frequencies
                 #dust is largely irrelevant, and so we just use a constant spectral index of 1.54.
                 RJ_factor = (nu / nu_break) ** 1.54
-                
+
                 #calculate the HD17  model at the break frequency.
                 scaling_I = RJ_factor * eval_HD17_I(nu_break, self.Nu_0_I)
                 scaling_P = RJ_factor * eval_HD17_P(nu_break, self.Nu_0_P)
@@ -491,50 +491,50 @@ class Dust(object):
                     scaling_I = hp.ud_grade(scaling_I, nside_out = hp.npix2nside(len(self.A_I)))
                     scaling_P = hp.ud_grade(scaling_P, nside_out = hp.npix2nside(len(self.A_I)))
                 except IndexError:
-                    pass 
-                
+                    pass
+
                 return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
-            
+
             #calculate the intensity scaling from reference frequency
             #self.Nu_0_I to frequency nu.
             scaling_I = eval_HD17_I(nu, self.Nu_0_I)
             scaling_P = eval_HD17_P(nu, self.Nu_0_P)
 
-            try: 
+            try:
                 scaling_I = hp.ud_grade(scaling_I, nside_out = hp.npix2nside(len(self.A_I)))
                 scaling_P = hp.ud_grade(scaling_P, nside_out = hp.npix2nside(len(self.A_I)))
             except IndexError:
                 pass
             return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
         return model
-    
+
 class AME(object):
-    """Class defining attributes and scaling laws of the synchrotron                                                   
-    component, instantiated with a configuration dictionary containing                                                 
-    the required parameters of the synchrotron models. The key                                                         
-    item pairs are then assigned as attributes.                                                                        
-                                                                                                                       
-    The current possible attributes are:                                                                               
-                                                                                                                       
-    - `Model` : SED used, power law or curved power law.                                                               
-    - `A_I` : intensity template used -- numpy.ndarray or float.                                                       
-    - `Nu_0_I` : reference frequency of I template -- float.                                                           
-    - `Nu_0_P` : reference frequency of Q and U template -- float.                                                     
+    """Class defining attributes and scaling laws of the synchrotron
+    component, instantiated with a configuration dictionary containing
+    the required parameters of the synchrotron models. The key
+    item pairs are then assigned as attributes.
+
+    The current possible attributes are:
+
+    - `Model` : SED used, power law or curved power law.
+    - `A_I` : intensity template used -- numpy.ndarray or float.
+    - `Nu_0_I` : reference frequency of I template -- float.
+    - `Nu_0_P` : reference frequency of Q and U template -- float.
     - `Emissivity` : numerically computed emissivity used to scale AME. In the nominal models this is produced using the SpDust2 code (Ali-Haimoud 2008) -- numpy.ndarray
     - `Nu_Peak_0` : parameter required by SpDust2 -- float
     - `Nu_Peak` : parameter required by SpDust2 -- float, numpy.ndarray
-    - `Pol_Frac` : polarisation fraction used in polarised AME model. 
-    - `Angle_Q` : Q template from which to calculate polarisation angle for AME. 
+    - `Pol_Frac` : polarisation fraction used in polarised AME model.
+    - `Angle_Q` : Q template from which to calculate polarisation angle for AME.
     - `Angle_U` : U template from which to calculate polarisation angle for AME.
-                                                                                                                       
+
     """
-    
+
     def __init__(self, config):
         for k in config.keys():
             read_key(self, k, config)
-        return  
+        return
 
-    @property 
+    @property
     def A_I(self):
         try:
             return self.__A_I
@@ -597,7 +597,7 @@ class AME(object):
         except AttributeError:
             print("AME attribute 'Angle_U' not set.")
             sys.exit(1)
-            
+
     @property
     def Pol_Frac(self):
     	try:
@@ -613,10 +613,10 @@ class AME(object):
 
         """
         return getattr(self, self.Model)()
-            
+
     def spdust_scaling(self, nu):
-        """Returns AME SED at frequency in GHz, nu. 
-        Implementation of the SpDust2 code of (Ali-Haimoud et al 2012), evaluated for a 
+        """Returns AME SED at frequency in GHz, nu.
+        Implementation of the SpDust2 code of (Ali-Haimoud et al 2012), evaluated for a
         Cold Neutral Medium.
 
         :param nu: frequency at which to calculate SED.
@@ -631,27 +631,27 @@ class AME(object):
         return scaling
 
     def spdust(self):
-        """Returns AME (T, Q, U) maps as a function of observing frequency, nu. 
-        
+        """Returns AME (T, Q, U) maps as a function of observing frequency, nu.
+
         :return: function -- AME spdust2 scaling as a function of frequency.
         """
         @FloatOrArray
         def model(nu, **kwargs):
             """Spdust2 unpolarised model.
 
-            :param nu: frequency in GHz at which to calculate the AME maps using 
+            :param nu: frequency in GHz at which to calculate the AME maps using
             spdust2.
             :type nu: float.
             :return: AME maps at frequency nu, shape (3, Npix) -- numpy.ndarray.
 
             """
-            return np.array([self.spdust_scaling(nu) * self.A_I, np.zeros_like(self.A_I), np.zeros_like(self.A_I)])	
+            return np.array([self.spdust_scaling(nu) * self.A_I, np.zeros_like(self.A_I), np.zeros_like(self.A_I)])
         return model
 
     def spdust_pol(self):
-        """Returns AME (T,Q, U) maps a a function of observing frequency Polarisation 
-        version of :meth:`pysm.components.spdust` in which the Q and U templates 
-        are calculated using the polarisation angle from the input Q_Angle and 
+        """Returns AME (T,Q, U) maps a a function of observing frequency Polarisation
+        version of :meth:`pysm.components.spdust` in which the Q and U templates
+        are calculated using the polarisation angle from the input Q_Angle and
         U_Angle tepmlates, and the given Pol_Frac.
         Scaling is the same as spdust(self).
 
@@ -666,7 +666,7 @@ class AME(object):
             calculating polarisation angle.
 
             :param nu: frequency in GHz at which to evaluate the model.
-            :type nu: float. 
+            :type nu: float.
             :return: numpy.ndarray -- maps of polarised AME model, shape (3, Npix).
 
             """
@@ -678,17 +678,17 @@ class AME(object):
 
 class Freefree(object):
     """Class defining attributes and scaling laws of the free-free
-    component, instantiated with a configuration dictionary containing                                                 
-    the required parameters of the free-free models. The key                                                         
-    item pairs are then assigned as attributes.                                                                        
-                                                                                                                       
-    The current possible attributes are:                                                                               
-                                                                                                                       
-    - `Model` : SED used, for free-free only power law is available.                                                               
-    - `A_I` : intensity template used -- numpy.ndarray or float.                                                       
-    - `Nu_0_I` : reference frequency of I template -- float.                                                           
-    - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray or float.                                                                               
-                                                                           
+    component, instantiated with a configuration dictionary containing
+    the required parameters of the free-free models. The key
+    item pairs are then assigned as attributes.
+
+    The current possible attributes are:
+
+    - `Model` : SED used, for free-free only power law is available.
+    - `A_I` : intensity template used -- numpy.ndarray or float.
+    - `Nu_0_I` : reference frequency of I template -- float.
+    - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray or float.
+
     """
     def __init__(self, config):
 	for k in config.keys():
@@ -702,7 +702,7 @@ class Freefree(object):
 	except AttributeError:
 	    print("Freefree attribute 'Model' not set.")
 	    sys.exit(1)
-            
+
     @property
     def A_I(self):
 	try:
@@ -728,31 +728,31 @@ class Freefree(object):
 	    sys.exit(1)
 
     def signal(self):
-        """Function to return the selected SED.                                                                        
-                                                                                                                       
+        """Function to return the selected SED.
+
         :return: function -- selected scaling model.
         """
 	return getattr(self, self.Model)()
-	
+
     def power_law(self):
-        """Returns synchrotron (T, Q, U) maps as a function of observation                                             
-        freuency, nu.                                                                                                  
-                                                                                                                       
-        This is the simplest model, using only a power law spectral                                                    
-        dependence.  The map of the spectral index may be a constant                                                   
-        or spatially varing.                                                                                           
-                                                                                                                       
+        """Returns synchrotron (T, Q, U) maps as a function of observation
+        freuency, nu.
+
+        This is the simplest model, using only a power law spectral
+        dependence.  The map of the spectral index may be a constant
+        or spatially varing.
+
         :return: function -- power law model.
-                                                                                           
+
         """
         @FloatOrArray
 	def model(nu, **kwargs):
             """Power law scaling model.
 
-            :param nu: frequency at which to calculate the map.                                                        
-            :type nu: float.                                                                                           
+            :param nu: frequency at which to calculate the map.
+            :type nu: float.
             :return: numpy.ndarray -- power law scaled maps, shape (3, Npix).
-                                                                                                        
+
             """
 	    scaling = power_law(nu, self.Nu_0_I, self.Spectral_Index)
 	    zeros = np.zeros_like(self.A_I)
@@ -760,75 +760,84 @@ class Freefree(object):
 	return model
 
 class CMB(object):
-    """Class defining attributes and scaling laws of the synchrotron                                                   
-    component, instantiated with a configuration dictionary containing                                                 
-    the required parameters of the synchrotron models. The key                                                         
+    """Class defining attributes and scaling laws of the synchrotron
+    component, instantiated with a configuration dictionary containing
+    the required parameters of the synchrotron models. The key
     item pairs are then assigned as attributes.
 
     The current possible attributes are:
 
     - `Model` : SED law, e.g. taylens.
-    - `A_I` : intensity template used -- numpy.ndarray or float.                                                       
-    - `A_Q` : Q template used -- numpy.ndarray or float.                                                               
-    - `A_U` : U template used -- numpy.ndarray or float.                                                               
-    - `cmb_specs` : input cls in CAMB format -- numpy.ndarray
+    - `A_I` : intensity template used -- numpy.ndarray or float.
+    - `A_Q` : Q template used -- numpy.ndarray or float.
+    - `A_U` : U template used -- numpy.ndarray or float.
+    - `cmb_specs` : input unlensed cls in CAMB format -- numpy.ndarray
     - `delensing_ells` : delensing fraction as a function of ell -- numpy.ndarray
-    - `nside` : nside at which to generate CMB. 
+    - `nside` : nside at which to generate CMB.
     - `cmb_seed` : random seed for CMB generation.
-                                                                                                                
+    - `cmb_specs_lensed` : input lensed cls in CAMB format` -- numpy.ndarray
+
     """
     def __init__(self, config):
-	for k in config.keys():
-	    read_key(self, k, config)
-	return
+        for k in config.keys():
+            read_key(self, k, config)
+        return
 
     @property
     def Model(self):
-	try:
-	    return self.__model
-	except AttributeError:
-	    print("CMB attribute 'Model' not set.")
-	    sys.exit(1)
+        try:
+            return self.__model
+        except AttributeError:
+            print("CMB attribute 'Model' not set.")
+            sys.exit(1)
 
     @property
     def CMB_Specs(self):
-	try:
-	    return self.__cmb_specs
-	except AttributeError:
-	    print("CMB attribute 'CMB_Specs' not set.")
-	    sys.exit(1)
+        try:
+            return self.__cmb_specs
+        except AttributeError:
+            print("CMB attribute 'CMB_Specs' not set.")
+            sys.exit(1)
 
-    @property 
+    @property
+    def CMB_Specs_Lensed(self):
+        try:
+            return self.__cmb_specs_lensed
+        except AttributeError:
+            print("CMB attribute 'CMB_Specs_Lensed' not set.")
+            sys.exit(1)
+
+    @property
     def Delens(self):
-	try:
-	    return self.__delens
-	except AttributeError:
-	    print("CMB attribute 'Delens' not set.")
-	    sys.exit(1)
+        try:
+            return self.__delens
+        except AttributeError:
+            print("CMB attribute 'Delens' not set.")
+            sys.exit(1)
 
-    @property 
+    @property
     def Delensing_Ells(self):
-	try:
-	    return self.__delensing_ells
-	except AttributeError:
-	    print("CMB attribute 'Delensing_Ells' not set.")
-	    sys.exit(1)
+        try:
+            return self.__delensing_ells
+        except AttributeError:
+            print("CMB attribute 'Delensing_Ells' not set.")
+            sys.exit(1)
 
-    @property 
+    @property
     def Nside(self):
-	try:
-	    return self.__nside
-	except AttributeError:
-	    print("CMB attribute 'Nside' not set.")
-	    sys.exit(1)
+        try:
+            return self.__nside
+        except AttributeError:
+            print("CMB attribute 'Nside' not set.")
+            sys.exit(1)
 
-    @property 
+    @property
     def CMB_Seed(self):
-	try:
-	    return self.__cmb_seed
-	except AttributeError:
-	    print("CMB attribute 'CMB_Seed' not set.")
-	    sys.exit(1)
+        try:
+            return self.__cmb_seed
+        except AttributeError:
+            print("CMB attribute 'CMB_Seed' not set.")
+            sys.exit(1)
 
     @property
     def A_I(self):
@@ -850,15 +859,15 @@ class CMB(object):
             return self.__A_U
         except AttributeError:
             print("CMB attribute 'A_U' not set.")
-            
+
     def signal(self):
         """Function to return the selected SED.
 
         :return: function -- selected model SED.
-        
+
         """
-	return getattr(self, self.Model)() 
-	
+        return getattr(self, self.Model)()
+
     def taylens(self):
         """Returns CMB (T, Q, U) maps as a function of observing frequency, nu.
 
@@ -866,74 +875,101 @@ class CMB(object):
 
         :return: function -- CMB maps.
         """
-	synlmax = 8 * self.Nside #this used to be user-defined.
-	data = self.CMB_Specs
-	lmax_cl = len(data[0]) + 1
-	l = np.arange(int(lmax_cl + 1))
-	synlmax = min(synlmax, l[-1])
+    	synlmax = 8 * self.Nside #this used to be user-defined.
+    	data = self.CMB_Specs
+    	lmax_cl = len(data[0]) + 1
+    	l = np.arange(int(lmax_cl + 1))
+    	synlmax = min(synlmax, l[-1])
 
-	#Reading input spectra in CAMB format. CAMB outputs l(l+1)/2pi hence the corrections.
-	cl_tebp_arr=np.zeros([10, lmax_cl + 1])
-	cl_tebp_arr[0, 2:] = 2 * np.pi * data[1] / (l[2:] * (l[2:] + 1))    #TT
-	cl_tebp_arr[1, 2:] = 2 * np.pi * data[2] / (l[2:] * (l[2:] + 1))    #EE
-	cl_tebp_arr[2, 2:] = 2 * np.pi * data[3] / (l[2:] * (l[2:] + 1))    #BB
-	cl_tebp_arr[4, 2:] = 2 * np.pi * data[4] / (l[2:] * (l[2:] + 1))    #TE
-	cl_tebp_arr[5, :] = np.zeros(lmax_cl + 1)           				#EB
-	cl_tebp_arr[7, :] = np.zeros(lmax_cl + 1)                    		#TB
+    	#Reading input spectra in CAMB format. CAMB outputs l(l+1)/2pi hence the corrections.
+    	cl_tebp_arr=np.zeros([10, lmax_cl + 1])
+    	cl_tebp_arr[0, 2:] = 2 * np.pi * data[1] / (l[2:] * (l[2:] + 1))    #TT
+    	cl_tebp_arr[1, 2:] = 2 * np.pi * data[2] / (l[2:] * (l[2:] + 1))    #EE
+    	cl_tebp_arr[2, 2:] = 2 * np.pi * data[3] / (l[2:] * (l[2:] + 1))    #BB
+    	cl_tebp_arr[4, 2:] = 2 * np.pi * data[4] / (l[2:] * (l[2:] + 1))    #TE
+    	cl_tebp_arr[5, :] = np.zeros(lmax_cl + 1)           				#EB
+    	cl_tebp_arr[7, :] = np.zeros(lmax_cl + 1)                    		#TB
 
-	if self.Delens:
-	    cl_tebp_arr[3, 2:] = 2 * np.pi * data[5] * self.Delensing_Ells[1] / (l[2:] * (l[2:] + 1)) ** 2   			#PP
-	    cl_tebp_arr[6,:] = np.zeros(lmax_cl + 1)                    												#BP
-	    cl_tebp_arr[8, 2:] = 2 * np.pi * data[7] * np.sqrt(self.Delensing_Ells[1]) / (l[2:] * (l[2:] + 1)) ** 1.5   #EP
-	    cl_tebp_arr[9, 2:] = 2 * np.pi * data[6] * np.sqrt(self.Delensing_Ells[1]) / (l[2:] * (l[2:] + 1)) ** 1.5  	#TP
-	else: 
-	    cl_tebp_arr[3,2:] = 2 * np.pi * data[5] / (l[2:] * (l[2:] + 1)) ** 2   	#PP
-	    cl_tebp_arr[6,:] =np.zeros(lmax_cl+1)                    				#BP
-	    cl_tebp_arr[8,2:] = 2 * np.pi * data[7] / (l[2:] * (l[2:] + 1)) ** 1.5 	#EP
-	    cl_tebp_arr[9,2:] = 2 * np.pi * data[6] / (l[2:] * (l[2:] + 1)) ** 1.5 	#TP
+    	if self.Delens:
+    	    cl_tebp_arr[3, 2:] = 2 * np.pi * data[5] * self.Delensing_Ells[1] / (l[2:] * (l[2:] + 1)) ** 2   			#PP
+    	    cl_tebp_arr[6,:] = np.zeros(lmax_cl + 1)                    												#BP
+    	    cl_tebp_arr[8, 2:] = 2 * np.pi * data[7] * np.sqrt(self.Delensing_Ells[1]) / (l[2:] * (l[2:] + 1)) ** 1.5   #EP
+    	    cl_tebp_arr[9, 2:] = 2 * np.pi * data[6] * np.sqrt(self.Delensing_Ells[1]) / (l[2:] * (l[2:] + 1)) ** 1.5  	#TP
+    	else:
+    	    cl_tebp_arr[3,2:] = 2 * np.pi * data[5] / (l[2:] * (l[2:] + 1)) ** 2   	#PP
+    	    cl_tebp_arr[6,:] =np.zeros(lmax_cl+1)                    				#BP
+    	    cl_tebp_arr[8,2:] = 2 * np.pi * data[7] / (l[2:] * (l[2:] + 1)) ** 1.5 	#EP
+    	    cl_tebp_arr[9,2:] = 2 * np.pi * data[6] / (l[2:] * (l[2:] + 1)) ** 1.5 	#TP
 
-	# Coordinates of healpix pixel centers
-	ipos = np.array(hp.pix2ang(self.Nside, np.arange(12 * (self.Nside ** 2))))
+    	# Coordinates of healpix pixel centers
+    	ipos = np.array(hp.pix2ang(self.Nside, np.arange(12 * (self.Nside ** 2))))
 
-	# Simulate a CMB and lensing field
-	cmb, aphi = simulate_tebp_correlated(cl_tebp_arr, self.Nside, synlmax, self.CMB_Seed)
-		
-	if cmb.ndim == 1: 
-	    cmb = np.reshape(cmb, [1, cmb.size])
+    	# Simulate a CMB and lensing field
+    	cmb, aphi = simulate_tebp_correlated(cl_tebp_arr, self.Nside, synlmax, self.CMB_Seed)
 
-	# Compute the offset positions
-	phi, phi_dtheta, phi_dphi = hp.alm2map_der1(aphi, self.Nside, lmax = synlmax)
+    	if cmb.ndim == 1:
+    	    cmb = np.reshape(cmb, [1, cmb.size])
 
-	del aphi
-		
-	opos, rot = offset_pos(ipos, phi_dtheta, phi_dphi, pol=True, geodesic=False) #geodesic used to be used defined.
-	del phi, phi_dtheta, phi_dphi
+    	# Compute the offset positions
+    	phi, phi_dtheta, phi_dphi = hp.alm2map_der1(aphi, self.Nside, lmax = synlmax)
 
-	# Interpolate maps one at a time
-	maps  = []
-	for comp in cmb:
-	    for m in taylor_interpol_iter(comp, opos, 3, verbose=False, lmax=None): #lmax here needs to be fixed. order of taylor expansion is fixed to 3.
-		pass
-	    maps.append(m)
-	del opos, cmb
-	#save the map computed for future referemce.
-	rm = apply_rotation(maps, rot)
+    	del aphi
+
+    	opos, rot = offset_pos(ipos, phi_dtheta, phi_dphi, pol=True, geodesic=False) #geodesic used to be used defined.
+    	del phi, phi_dtheta, phi_dphi
+
+    	# Interpolate maps one at a time
+    	maps  = []
+    	for comp in cmb:
+    	    for m in taylor_interpol_iter(comp, opos, 3, verbose=False, lmax=None): #lmax here needs to be fixed. order of taylor expansion is fixed to 3.
+    		pass
+    	    maps.append(m)
+    	del opos, cmb
+    	#save the map computed for future referemce.
+    	rm = apply_rotation(maps, rot)
 
         @FloatOrArray
-	def model(nu, **kwargs):
-	    return np.array(rm) * convert_units("uK_CMB", "uK_RJ", nu)
-	return model
+    	def model(nu, **kwargs):
+    	    return np.array(rm) * convert_units("uK_CMB", "uK_RJ", nu)
+    	return model
+
+    def synfast(self):
+        """Function for the calculation of lensed CMB maps directly from
+        lensed Cls using healpix's synfast routine.
+        """
+        # get the spectra. These are in CAMB format, we discard the last
+        # three corresponding to dd, dt, de, respectively.
+    	ell, tt, ee, bb, te, _, _, _ = self.CMB_Specs
+    	lmax_cl = len(ell) + 1
+    	ell = np.arange(lmax_cl + 1)
+
+        # in CAMB format so we must divide by the scaling factor
+        factor = ell * (ell + 1.) / 2. / np.pi
+
+        cl_teb = np.zeros((6, lmax_cl + 1))
+        cl_teb[0, 2:] = tt / factor[2:]
+        cl_teb[1, 2:] = ee / factor[2:]
+        cl_teb[2, 2:] = bb / factor[2:]
+        cl_teb[3, 2:] = te / factor[2:]
+        cl_teb[4, 2:] = 0.
+        cl_teb[5, 2:] = 0.
+
+        T, Q, U = hp.synfast(cl_teb, self.Nside, pol=True, new=True, verbose=False)
+
+        def model(nu, **kwargs):
+            return np.array([T, Q, U]) * convert_units("uK_CMB", "uK_RJ", nu)
+        return model
 
     def pre_computed(self):
-        """Returns a CMB (T, Q, U) maps as a function of observing frequency, nu. 
+        """Returns a CMB (T, Q, U) maps as a function of observing frequency, nu.
 
         This function takes a pre-computed map of the CMB and scales
         it to some new frequency.
 
         """
         @FloatOrArray
-	def model(nu, **kwargs):
-	    return np.array([self.A_I, self.A_Q, self.A_U]) * convert_units("uK_CMB", "uK_RJ", nu) 
+    	def model(nu, **kwargs):
+    	    return np.array([self.A_I, self.A_Q, self.A_U]) * convert_units("uK_CMB", "uK_RJ", nu)
         return model
 
 def power_law(nu, nu_0, b):
@@ -942,11 +978,11 @@ def power_law(nu, nu_0, b):
     Returns a power law scaling by index b for a map at reference
     frequency nu_0 t0 be scale to frequency nu.
 
-    :param nu: frequency being scaled to. 
+    :param nu: frequency being scaled to.
     :type nu: float.
-    :param nu_0: reference frequency of power law. 
-    :type nu_0: float. 
-    :param b: spectral index by which to scale. 
+    :param nu_0: reference frequency of power law.
+    :type nu_0: float.
+    :param b: spectral index by which to scale.
     :type b: float.
 
     """
@@ -971,14 +1007,14 @@ def black_body(nu, nu_0, T):
 
 def get_decorrelation_matrices(freqs,freq_ref,corrlen) :
     """Function to compute the mean and covariance for the decorrelation
-    
+
     :param freqs: frequencies at which to calculate covariance structure.
     :type freqs: numpy.array.
     :param freq_ref: reference frequency for constrained map.
     :type freq_ref: float.
     :corrlen: correlation length of imposed Gaussian decorrelation.
     :return: numpy.ndarray(len(freqs), len(freqs)), nump.ndarray(len(freqs)) -- the output covariance and mean.
-    
+
     """
     if corrlen <= 0:
         rho_mean = np.ones([len(freqs), 1])
@@ -990,7 +1026,7 @@ def get_decorrelation_matrices(freqs,freq_ref,corrlen) :
             freqtot = np.insert(freqtot, 0, freq_ref)
             added_freq = True
         indref = np.where(freqtot == freq_ref)[0][0]
-            
+
         corrmatrix = np.exp(-0.5 * ((np.log(freqtot[:, None]) - np.log(freqtot[None, :])) / corrlen) ** 2)
         rho_inv = invert_safe(corrmatrix)
         rho_uu = np.delete(np.delete(rho_inv, indref, axis = 0), indref, axis = 1)
@@ -998,10 +1034,10 @@ def get_decorrelation_matrices(freqs,freq_ref,corrlen) :
         rho_inv_cu = rho_inv[:, indref]
         rho_inv_cu=np.transpose(np.array([np.delete(rho_inv_cu, indref)]))
         rho_uu_w, rho_uu_v = np.linalg.eigh(rho_uu)
-    
+
         rho_covar=np.dot(rho_uu_v, np.dot(np.diag(np.sqrt(np.maximum(rho_uu_w, np.zeros_like(rho_uu_w)))), np.transpose(rho_uu_v)))
         rho_mean=-np.dot(rho_uu, rho_inv_cu)
-        
+
         if not added_freq:
             rho_covar_new=np.zeros([len(freqtot), len(freqtot)])
             rho_mean_new=np.ones([len(freqtot), 1])
@@ -1013,27 +1049,27 @@ def get_decorrelation_matrices(freqs,freq_ref,corrlen) :
             rho_mean_new[:indref, :] = rho_mean[:indref, :]
             rho_mean_new[indref + 1:, :] = rho_mean[indref:, :]
             rho_mean = rho_mean_new
-            
+
     return rho_covar, rho_mean
 
 def Add_Decorrelation(Component):
     """Function to calculate a wrapper for some model(nu) function to add
     decorrelation.
-                    
+
     :param Component: instance of one of the classes in :mod:`pysm.component`
     :type Component: class
     :return: function - decorator used to add stochastic decorrelation to an emission model.
 
     Required parameters:
-    
+
     - Component.Add_Decorrelation: bool - True = add decorrelation. Flase = do not.
     - Component.Corr_Len: float - correlation length defined in accompanying paper.
 
     Example use:
     .. code-block::
-       
-       class Synchrotron(object): 
-       
+
+       class Synchrotron(object):
+
        def curved_power_law(self):
            @Add_Decorrelation(self)
            def model(nu):
@@ -1068,14 +1104,14 @@ def Add_Decorrelation(Component):
                 return model(nu, **kwargs)
             return wrapper
         return decorrelation
-    
+
 """The following code is edited from the taylens code: Naess,
 S. K. and Louis, T. 2013 'Lensing simulations by Taylor expansion -
 not so inefficient after all' Journal of Cosmology and Astroparticle
 Physics September 2013.  Available at:
 https://github.com/amaurea/taylens
 
-"""                                        
+"""
 def simulate_tebp_correlated(cl_tebp_arr, nside, lmax, seed):
 	"""This generates correlated T,E,B and Phi maps
 
@@ -1084,13 +1120,13 @@ def simulate_tebp_correlated(cl_tebp_arr, nside, lmax, seed):
 	alms=hp.synalm(cl_tebp_arr, lmax = lmax, new = True)
 	aphi=alms[-1]
 	acmb=alms[0 : -1]
-	#Set to zero above map resolution to avoid aliasing                                        
+	#Set to zero above map resolution to avoid aliasing
 	beam_cut=np.ones(3 * nside)
 	for ac in acmb:
 		hp.almxfl(ac, beam_cut, inplace = True)
 	cmb=np.array(hp.alm2map(acmb, nside, pol = True, verbose = False))
 	return cmb, aphi
-                                                              
+
 def taylor_interpol_iter(m, pos, order=3, verbose=False, lmax=None):
     """Given a healpix map m[npix], and a set of positions
     pos[{theta,phi},...], evaluate the values at those positions using
@@ -1101,41 +1137,41 @@ def taylor_interpol_iter(m, pos, order=3, verbose=False, lmax=None):
 
     """
     nside = hp.npix2nside(m.size)
-    if lmax is None: 
+    if lmax is None:
     	lmax = 3 * nside
-    # Find the healpix pixel centers closest to pos,                                             
-    # and our deviation from these pixel centers.                                                
+    # Find the healpix pixel centers closest to pos,
+    # and our deviation from these pixel centers.
     ipos = hp.ang2pix(nside, pos[0], pos[1])
     pos0 = np.array(hp.pix2ang(nside, ipos))
     dpos = pos[:2] - pos0
-    # Take wrapping into account                                                                 
+    # Take wrapping into account
     bad = dpos[1] > np.pi
     dpos[1, bad] = dpos[1, bad] - 2 * np.pi
     bad = dpos[1] <- np.pi
     dpos[1, bad] = dpos[1, bad] + 2 * np.pi
 
-    # Since healpix' dphi actually returns dphi/sintheta, we choose                              
-    # to expand in terms of dphi*sintheta instead.                                               
+    # Since healpix' dphi actually returns dphi/sintheta, we choose
+    # to expand in terms of dphi*sintheta instead.
     dpos[1] *= np.sin(pos0[0])
     del pos0
 
-    # We will now Taylor expand our healpix field to                                             
-    # get approximations for the values at our chosen                                            
-    # locations. The structure of this section is                                                
-    # somewhat complicated by the fact that alm2map_der1 returns                                 
-    # two different derivatives at the same time.                                                
+    # We will now Taylor expand our healpix field to
+    # get approximations for the values at our chosen
+    # locations. The structure of this section is
+    # somewhat complicated by the fact that alm2map_der1 returns
+    # two different derivatives at the same time.
     derivs = [[m]]
     res = m[ipos]
     yield res
     for o in range(1, order + 1):
-            # Compute our derivatives                                                            
+            # Compute our derivatives
             derivs2 = [None for i in range(o+1)]
             used    = [False for i in range(o+1)]
-            # Loop through previous level in steps of two (except last)                          
+            # Loop through previous level in steps of two (except last)
             if verbose: tprint("order %d" % o)
             for i in range(o):
-                    # Each alm2map_der1 provides two derivatives, so avoid                       
-                    # doing double work.                                                         
+                    # Each alm2map_der1 provides two derivatives, so avoid
+                    # doing double work.
                     if i < o-1 and i % 2 == 1:
                             continue
                     a = hp.map2alm(derivs[i], use_weights = True, lmax = lmax, iter = 0)
@@ -1143,15 +1179,15 @@ def taylor_interpol_iter(m, pos, order=3, verbose=False, lmax=None):
                     dtheta, dphi = hp.alm2map_der1(a, nside, lmax = lmax)[-2:]
                     derivs2[i : i + 2] = [dtheta, dphi]
                     del a, dtheta, dphi
-                    # Use these to compute the next level                                        
+                    # Use these to compute the next level
                     for j in range(i, min(i + 2, o + 1)):
-                            if used[j]: 
+                            if used[j]:
                             	continue
                             N = comb(o, j) / factorial(o)
                             res += N * derivs2[j][ipos] * dpos[0]**(o-j) * dpos[1]**j
                             used[j] = True
-                            # If we are at the last order, we don't need to waste memory         
-                            # storing the derivatives any more                                   
+                            # If we are at the last order, we don't need to waste memory
+                            # storing the derivatives any more
                             if o == order: derivs2[j] = None
             derivs = derivs2
             yield res
@@ -1161,7 +1197,7 @@ data and preparing it for being lensed. Most of them are only needed
 to take care of tiny, curvature-related effects that can be safely
 ignored.
 
-"""                                                                
+"""
 def readspec(fname):
     """Read a power spectrum with columns [l,comp1,comp2,....]  into a 2d
     array indexed by l. Entries with missing data are filled with
@@ -1180,21 +1216,21 @@ def offset_pos(ipos, dtheta, dphi, pol=False, geodesic=False):
     sphere into account. If pol is passed, also computes the cos and
     sin of the angle by which (Q,U) must be rotated to take into
     account the change in local coordinate system.
-                                                                                               
+
     If geodesic is passed, a quick and dirty, but quite accurate,
     approximation is used.
-                                                                                              
+
     Uses the memory of 2 maps (4 if pol) (plus that of the input
     maps).
 
     """
     opos = np.zeros(ipos.shape)
-    if pol and not geodesic: 
+    if pol and not geodesic:
     	orot = np.zeros(ipos.shape)
-    else: 
+    else:
     	orot = None
     if not geodesic:
-            # Loop over chunks in order to conserve memory                                       
+            # Loop over chunks in order to conserve memory
             step = 0x10000
             for i in range(0, ipos.shape[1], step):
                     small_opos, small_orot = offset_pos_helper(ipos[:,i:i+step], dtheta[i:i+step], dphi[i:i+step], pol)
@@ -1242,9 +1278,9 @@ def apply_rotation(m, rot):
     outputs from offset_pos.
 
     """
-    if len(m) < 3: 
+    if len(m) < 3:
     	return m
-    if rot is None: 
+    if rot is None:
     	return m
     m = np.asarray(m)
     res = m.copy()
@@ -1252,13 +1288,13 @@ def apply_rotation(m, rot):
     res[2] = rot[1] * m[1] + rot[0] * m[2]
     return m
 
-# Set up progress prints                                                                             
+# Set up progress prints
 t0 = None
-def silent(msg): 
+def silent(msg):
 	pass
 
 def tprint(msg):
         global t0
-        if t0 is None: 
+        if t0 is None:
         	t0 = time.time()
         print >> sys.stderr, "%8.2f %s" % (time.time() - t0, msg)
