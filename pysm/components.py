@@ -954,6 +954,7 @@ class CMB(object):
         cl_teb[4, 2:] = 0.
         cl_teb[5, 2:] = 0.
 
+        np.random.seed(self.CMB_Seed)
         T, Q, U = hp.synfast(cl_teb, self.Nside, pol=True, new=True, verbose=False)
 
         @FloatOrArray
