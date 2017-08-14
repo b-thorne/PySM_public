@@ -956,6 +956,7 @@ class CMB(object):
 
         T, Q, U = hp.synfast(cl_teb, self.Nside, pol=True, new=True, verbose=False)
 
+        @FloatOrArray
         def model(nu, **kwargs):
             return np.array([T, Q, U]) * convert_units("uK_CMB", "uK_RJ", nu)
         return model
