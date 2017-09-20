@@ -1,5 +1,6 @@
 from common import read_map
 import numpy as np
+from healpy import nside2npix
 import os
 
 data_dir = os.path.join(os.path.dirname(__file__), 'template')
@@ -16,8 +17,8 @@ def d0(nside):
         'A_I': read_map(template('dust_t_new.fits'), nside, field=0),
         'A_Q': read_map(template('dust_q_new.fits'), nside, field=0),
         'A_U': read_map(template('dust_u_new.fits'), nside, field=0),
-        'spectral_index': 1.54,
-        'temp': 20,
+        'spectral_index': np.ones(nside2npix(nside)) * 1.54,
+        'temp': np.ones(nside2npix(nside)) * 20.,
         'add_decorrelation': False,
     }]
 
@@ -151,7 +152,7 @@ def s0(nside):
         'A_I': read_map(template('synch_t_new.fits'), nside, field=0),
         'A_Q': read_map(template('synch_q_new.fits'), nside, field=0),
         'A_U': read_map(template('synch_u_new.fits'), nside, field=0),
-        'spectral_index': -3,
+        'spectral_index': np.ones(nside2npix(nside)) * -3,
     }]
 
 def s1(nside):
