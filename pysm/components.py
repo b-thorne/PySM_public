@@ -41,67 +41,67 @@ class Synchrotron(object):
 
     @property
     def Model(self):
-    	try:
+        try:
             return self.__model
-    	except AttributeError:
-    	    print("Synchrotron attribute 'Model' not set.")
-    	    sys.exit(1)
+        except AttributeError:
+            print("Synchrotron attribute 'Model' not set.")
+            sys.exit(1)
 
     @property
     def A_I(self):
-    	try:
+        try:
             return self.__A_I
         except AttributeError:
-    	    print("Synchrotron attribute 'A_I' not set.")
-    	    sys.exit(1)
+            print("Synchrotron attribute 'A_I' not set.")
+            sys.exit(1)
 
     @property
     def A_Q(self):
-    	try:
+        try:
             return self.__A_Q
         except AttributeError:
-    	    print("Synchrotron attribute 'A_Q' not set.")
-    	    sys.exit(1)
+            print("Synchrotron attribute 'A_Q' not set.")
+            sys.exit(1)
 
     @property
     def A_U(self):
-    	try:
+        try:
             return self.__A_U
         except AttributeError:
-    	    print("%s attribute 'A_U' not set.")
-    	    sys.exit(1)
+            print("%s attribute 'A_U' not set.")
+            sys.exit(1)
 
     @property
     def Nu_0_I(self):
-    	try:
+        try:
             return self.__nu_0_I
         except AttributeError:
-    	    print("Synchrotron attribute 'Nu_0_I' not set.")
-    	    sys.exit(1)
+            print("Synchrotron attribute 'Nu_0_I' not set.")
+            sys.exit(1)
 
     @property
     def Nu_0_P(self):
-    	try:
+        try:
             return self.__nu_0_P
         except AttributeError:
-    	    print("Synchrotron attribute 'Nu_0_P' not set.")
-    	    sys.exit(1)
+            print("Synchrotron attribute 'Nu_0_P' not set.")
+            sys.exit(1)
 
     @property
     def Spectral_Index(self):
-    	try:
+        try:
             return self.__spectral_index
         except AttributeError:
-    	    print("Synchrotron attribute 'Spectral_Index' not set.")
-    	    sys.exit(1)
+            print("Synchrotron attribute 'Spectral_Index' not set.")
+            sys.exit(1)
 
     @property
     def Spectral_Curvature(self):
-    	try:
+        try:
             return self.__spectral_curvature
-    	except AttributeError:
-    	    print("Synchrotron attribute 'Spectral_Curvature' not set.")
-    	    sys.exit(1)
+        except AttributeError:
+            print("Synchrotron attribute 'Spectral_Curvature' not set.")
+            sys.exit(1)
 
     @property
     def Nu_Curve(self):
@@ -199,67 +199,67 @@ class Dust(object):
 
     @property
     def Model(self):
-    	try:
+        try:
             return self.__model
-    	except AttributeError:
-    	    print("Dust attribute 'Model' not set.")
-    	    sys.exit(1)
+        except AttributeError:
+            print("Dust attribute 'Model' not set.")
+            sys.exit(1)
 
     @property
     def A_I(self):
-    	try:
+        try:
             return self.__A_I
         except AttributeError:
-    	    print("Dust attribute 'A_I' not set.")
-    	    sys.exit(1)
+            print("Dust attribute 'A_I' not set.")
+            sys.exit(1)
 
     @property
     def A_Q(self):
-    	try:
+        try:
             return self.__A_Q
         except AttributeError:
-    	    print("Dust attribute 'A_Q' not set.")
-    	    sys.exit(1)
+            print("Dust attribute 'A_Q' not set.")
+            sys.exit(1)
 
     @property
     def A_U(self):
-    	try:
+        try:
             return self.__A_U
         except AttributeError:
-    	    print("Dust attribute 'A_U' not set.")
-    	    sys.exit(1)
+            print("Dust attribute 'A_U' not set.")
+            sys.exit(1)
 
     @property
     def Nu_0_I(self):
-    	try:
+        try:
             return self.__nu_0_I
         except AttributeError:
-    	    print("Dust attribute 'Nu_0_I' not set.")
-    	    sys.exit(1)
+            print("Dust attribute 'Nu_0_I' not set.")
+            sys.exit(1)
 
     @property
     def Nu_0_P(self):
-    	try:
-    	    return self.__nu_0_P
+        try:
+            return self.__nu_0_P
         except AttributeError:
-    	    print("Dust attribute 'Nu_0_P' not set.")
-    	    sys.exit(1)
+            print("Dust attribute 'Nu_0_P' not set.")
+            sys.exit(1)
 
     @property
     def Spectral_Index(self):
-    	try:
-	    return self.__spectral_index
+        try:
+            return self.__spectral_index
         except AttributeError:
-    	    print("Dust attribute 'Spectral_Index' not set.")
-    	    sys.exit(1)
+            print("Dust attribute 'Spectral_Index' not set.")
+            sys.exit(1)
 
     @property
     def Temp(self):
-    	try:
+        try:
             return self.__temp
         except AttributeError:
-    	    print("Dust attribute 'Temp' not set.")
-    	    sys.exit(1)
+            print("Dust attribute 'Temp' not set.")
+            sys.exit(1)
 
     @property
     def Uval(self):
@@ -544,43 +544,43 @@ class AME(object):
 
     @property
     def Emissivity(self):
-    	try:
+        try:
             return self.__emissivity
         except AttributeError:
-    	    print("AME attribute 'Emissivity' not set.")
-    	    sys.exit(1)
+            print("AME attribute 'Emissivity' not set.")
+            sys.exit(1)
 
     @property
     def Model(self):
-	try:
-	    return self.__model
-	except AttributeError:
-	    print("AME attribute 'Model' not set.")
-	    sys.exit(1)
+        try:
+            return self.__model
+        except AttributeError:
+            print("AME attribute 'Model' not set.")
+            sys.exit(1)
 
     @property
     def Nu_0_I(self):
-    	try:
+        try:
             return self.__nu_0_I
         except AttributeError:
-    	    print("AME attribute 'Nu_0_I' not set.")
-    	    sys.exit(1)
+            print("AME attribute 'Nu_0_I' not set.")
+            sys.exit(1)
 
     @property
     def Nu_Peak(self):
-    	try:
+        try:
             return self.__nu_peak
         except AttributeError:
-    	    print("AME attribute 'Nu_Peak' not set.")
-    	    sys.exit(1)
+            print("AME attribute 'Nu_Peak' not set.")
+            sys.exit(1)
 
     @property
     def Nu_Peak_0(self):
-    	try:
+        try:
             return self.__nu_peak_0
-    	except AttributeError:
-    	    print("AME attribute 'Nu_Peak_0' not set.")
-    	    sys.exit(1)
+        except AttributeError:
+            print("AME attribute 'Nu_Peak_0' not set.")
+            sys.exit(1)
 
     @property
     def Angle_Q(self):
@@ -600,11 +600,11 @@ class AME(object):
 
     @property
     def Pol_Frac(self):
-    	try:
-    	    return self.__pol_frac
-    	except AttributeError:
-    	    print("AME attribute 'Pol_Frac' not set.")
-    	    sys.exit(1)
+        try:
+            return self.__pol_frac
+        except AttributeError:
+            print("AME attribute 'Pol_Frac' not set.")
+            sys.exit(1)
 
     def signal(self):
         """Function to return the selected SED.
@@ -624,7 +624,7 @@ class AME(object):
         :return: spdust SED - float.
 
         """
-    	J = interp1d(self.Emissivity[0], self.Emissivity[1], bounds_error = False, fill_value = 0)
+        J = interp1d(self.Emissivity[0], self.Emissivity[1], bounds_error = False, fill_value = 0)
         arg1 = nu * self.Nu_Peak_0 / self.Nu_Peak
         arg2 = self.Nu_0_I * self.Nu_Peak_0 / self.Nu_Peak
         scaling = ((self.Nu_0_I / nu) ** 2) * (J(arg1) / J(arg2))
@@ -658,7 +658,7 @@ class AME(object):
         :return: function -- polarised spdust2 model as a function of frequency.
         """
         @FloatOrArray
-    	def model(nu, **kwargs):
+        def model(nu, **kwargs):
             """We use input Q and U from dust templates in order to make the
             polarisation angle consistent after down or up grading
             resolution. Downgrading polarisatoin angle templates gives
@@ -671,10 +671,10 @@ class AME(object):
 
             """
             pol_angle = np.arctan2(self.Angle_U, self.Angle_Q)
-    	    A_Q = self.A_I * self.Pol_Frac * np.cos(pol_angle)
-    	    A_U = self.A_I * self.Pol_Frac * np.sin(pol_angle)
-    	    return self.spdust_scaling(nu) * np.array([self.A_I, A_Q, A_U])
-    	return model
+            A_Q = self.A_I * self.Pol_Frac * np.cos(pol_angle)
+            A_U = self.A_I * self.Pol_Frac * np.sin(pol_angle)
+            return self.spdust_scaling(nu) * np.array([self.A_I, A_Q, A_U])
+        return model
 
 class Freefree(object):
     """Class defining attributes and scaling laws of the free-free
@@ -691,48 +691,48 @@ class Freefree(object):
 
     """
     def __init__(self, config):
-	for k in config.keys():
-	    read_key(self, k, config)
-	return
+        for k in config.keys():
+            read_key(self, k, config)
+        return
 
     @property
     def Model(self):
-	try:
-	    return self.__model
-	except AttributeError:
-	    print("Freefree attribute 'Model' not set.")
-	    sys.exit(1)
+        try:
+            return self.__model
+        except AttributeError:
+            print("Freefree attribute 'Model' not set.")
+            sys.exit(1)
 
     @property
     def A_I(self):
-	try:
-	    return self.__A_I
-	except AttributeError:
-	    print("Freefree attribute 'A_I' not set.")
-	    sys.exit(1)
+        try:
+            return self.__A_I
+        except AttributeError:
+            print("Freefree attribute 'A_I' not set.")
+            sys.exit(1)
 
     @property
     def Nu_0_I(self):
-	try:
-	    return self.__nu_0_I
-	except AttributeError:
-	    print("Freefree attribute 'Nu_0_I' not set.")
-	    sys.exit(1)
+        try:
+            return self.__nu_0_I
+        except AttributeError:
+            print("Freefree attribute 'Nu_0_I' not set.")
+            sys.exit(1)
 
     @property
     def Spectral_Index(self):
-	try:
-	    return self.__spectral_index
-	except AttributeError:
-	    print("Freefree attribute 'Spectral_Index' not set.")
-	    sys.exit(1)
+        try:
+            return self.__spectral_index
+        except AttributeError:
+            print("Freefree attribute 'Spectral_Index' not set.")
+            sys.exit(1)
 
     def signal(self):
         """Function to return the selected SED.
 
         :return: function -- selected scaling model.
         """
-	return getattr(self, self.Model)()
+        return getattr(self, self.Model)()
 
     def power_law(self):
         """Returns synchrotron (T, Q, U) maps as a function of observation
@@ -746,7 +746,7 @@ class Freefree(object):
 
         """
         @FloatOrArray
-	def model(nu, **kwargs):
+        def model(nu, **kwargs):
             """Power law scaling model.
 
             :param nu: frequency at which to calculate the map.
@@ -754,10 +754,10 @@ class Freefree(object):
             :return: numpy.ndarray -- power law scaled maps, shape (3, Npix).
 
             """
-	    scaling = power_law(nu, self.Nu_0_I, self.Spectral_Index)
-	    zeros = np.zeros_like(self.A_I)
-	    return np.array([self.A_I * scaling, zeros, zeros])
-	return model
+            scaling = power_law(nu, self.Nu_0_I, self.Spectral_Index)
+            zeros = np.zeros_like(self.A_I)
+            return np.array([self.A_I * scaling, zeros, zeros])
+        return model
 
 class CMB(object):
     """Class defining attributes and scaling laws of the synchrotron
@@ -875,63 +875,63 @@ class CMB(object):
 
         :return: function -- CMB maps.
         """
-    	synlmax = 8 * self.Nside #this used to be user-defined.
-    	data = self.CMB_Specs
-    	lmax_cl = len(data[0]) + 1
-    	l = np.arange(int(lmax_cl + 1))
-    	synlmax = min(synlmax, l[-1])
+        synlmax = 8 * self.Nside #this used to be user-defined.
+        data = self.CMB_Specs
+        lmax_cl = len(data[0]) + 1
+        l = np.arange(int(lmax_cl + 1))
+        synlmax = min(synlmax, l[-1])
 
-    	#Reading input spectra in CAMB format. CAMB outputs l(l+1)/2pi hence the corrections.
-    	cl_tebp_arr=np.zeros([10, lmax_cl + 1])
-    	cl_tebp_arr[0, 2:] = 2 * np.pi * data[1] / (l[2:] * (l[2:] + 1))    #TT
-    	cl_tebp_arr[1, 2:] = 2 * np.pi * data[2] / (l[2:] * (l[2:] + 1))    #EE
-    	cl_tebp_arr[2, 2:] = 2 * np.pi * data[3] / (l[2:] * (l[2:] + 1))    #BB
-    	cl_tebp_arr[4, 2:] = 2 * np.pi * data[4] / (l[2:] * (l[2:] + 1))    #TE
-    	cl_tebp_arr[5, :] = np.zeros(lmax_cl + 1)           				#EB
-    	cl_tebp_arr[7, :] = np.zeros(lmax_cl + 1)                    		#TB
+        #Reading input spectra in CAMB format. CAMB outputs l(l+1)/2pi hence the corrections.
+        cl_tebp_arr=np.zeros([10, lmax_cl + 1])
+        cl_tebp_arr[0, 2:] = 2 * np.pi * data[1] / (l[2:] * (l[2:] + 1))    #TT
+        cl_tebp_arr[1, 2:] = 2 * np.pi * data[2] / (l[2:] * (l[2:] + 1))    #EE
+        cl_tebp_arr[2, 2:] = 2 * np.pi * data[3] / (l[2:] * (l[2:] + 1))    #BB
+        cl_tebp_arr[4, 2:] = 2 * np.pi * data[4] / (l[2:] * (l[2:] + 1))    #TE
+        cl_tebp_arr[5, :] = np.zeros(lmax_cl + 1)                           #EB
+        cl_tebp_arr[7, :] = np.zeros(lmax_cl + 1)                           #TB
 
-    	if self.Delens:
-    	    cl_tebp_arr[3, 2:] = 2 * np.pi * data[5] * self.Delensing_Ells[1] / (l[2:] * (l[2:] + 1)) ** 2   			#PP
-    	    cl_tebp_arr[6,:] = np.zeros(lmax_cl + 1)                    												#BP
-    	    cl_tebp_arr[8, 2:] = 2 * np.pi * data[7] * np.sqrt(self.Delensing_Ells[1]) / (l[2:] * (l[2:] + 1)) ** 1.5   #EP
-    	    cl_tebp_arr[9, 2:] = 2 * np.pi * data[6] * np.sqrt(self.Delensing_Ells[1]) / (l[2:] * (l[2:] + 1)) ** 1.5  	#TP
-    	else:
-    	    cl_tebp_arr[3,2:] = 2 * np.pi * data[5] / (l[2:] * (l[2:] + 1)) ** 2   	#PP
-    	    cl_tebp_arr[6,:] =np.zeros(lmax_cl+1)                    				#BP
-    	    cl_tebp_arr[8,2:] = 2 * np.pi * data[7] / (l[2:] * (l[2:] + 1)) ** 1.5 	#EP
-    	    cl_tebp_arr[9,2:] = 2 * np.pi * data[6] / (l[2:] * (l[2:] + 1)) ** 1.5 	#TP
+        if self.Delens:
+            cl_tebp_arr[3, 2:] = 2 * np.pi * data[5] * self.Delensing_Ells[1] / (l[2:] * (l[2:] + 1)) ** 2              #PP
+            cl_tebp_arr[6,:] = np.zeros(lmax_cl + 1)                                                                    #BP
+            cl_tebp_arr[8, 2:] = 2 * np.pi * data[7] * np.sqrt(self.Delensing_Ells[1]) / (l[2:] * (l[2:] + 1)) ** 1.5   #EP
+            cl_tebp_arr[9, 2:] = 2 * np.pi * data[6] * np.sqrt(self.Delensing_Ells[1]) / (l[2:] * (l[2:] + 1)) ** 1.5   #TP
+        else:
+            cl_tebp_arr[3,2:] = 2 * np.pi * data[5] / (l[2:] * (l[2:] + 1)) ** 2        #PP
+            cl_tebp_arr[6,:] =np.zeros(lmax_cl+1)                                       #BP
+            cl_tebp_arr[8,2:] = 2 * np.pi * data[7] / (l[2:] * (l[2:] + 1)) ** 1.5      #EP
+            cl_tebp_arr[9,2:] = 2 * np.pi * data[6] / (l[2:] * (l[2:] + 1)) ** 1.5      #TP
 
-    	# Coordinates of healpix pixel centers
-    	ipos = np.array(hp.pix2ang(self.Nside, np.arange(12 * (self.Nside ** 2))))
+        # Coordinates of healpix pixel centers
+        ipos = np.array(hp.pix2ang(self.Nside, np.arange(12 * (self.Nside ** 2))))
 
-    	# Simulate a CMB and lensing field
-    	cmb, aphi = simulate_tebp_correlated(cl_tebp_arr, self.Nside, synlmax, self.CMB_Seed)
+        # Simulate a CMB and lensing field
+        cmb, aphi = simulate_tebp_correlated(cl_tebp_arr, self.Nside, synlmax, self.CMB_Seed)
 
-    	if cmb.ndim == 1:
-    	    cmb = np.reshape(cmb, [1, cmb.size])
+        if cmb.ndim == 1:
+            cmb = np.reshape(cmb, [1, cmb.size])
 
-    	# Compute the offset positions
-    	phi, phi_dtheta, phi_dphi = hp.alm2map_der1(aphi, self.Nside, lmax = synlmax)
+        # Compute the offset positions
+        phi, phi_dtheta, phi_dphi = hp.alm2map_der1(aphi, self.Nside, lmax = synlmax)
 
-    	del aphi
+        del aphi
 
-    	opos, rot = offset_pos(ipos, phi_dtheta, phi_dphi, pol=True, geodesic=False) #geodesic used to be used defined.
-    	del phi, phi_dtheta, phi_dphi
+        opos, rot = offset_pos(ipos, phi_dtheta, phi_dphi, pol=True, geodesic=False) #geodesic used to be used defined.
+        del phi, phi_dtheta, phi_dphi
 
-    	# Interpolate maps one at a time
-    	maps  = []
-    	for comp in cmb:
-    	    for m in taylor_interpol_iter(comp, opos, 3, verbose=False, lmax=None): #lmax here needs to be fixed. order of taylor expansion is fixed to 3.
-    		pass
-    	    maps.append(m)
-    	del opos, cmb
-    	#save the map computed for future referemce.
-    	rm = apply_rotation(maps, rot)
+        # Interpolate maps one at a time
+        maps  = []
+        for comp in cmb:
+            for m in taylor_interpol_iter(comp, opos, 3, verbose=False, lmax=None): #lmax here needs to be fixed. order of taylor expansion is fixed to 3.
+                pass
+            maps.append(m)
+        del opos, cmb
+        #save the map computed for future referemce.
+        rm = apply_rotation(maps, rot)
 
         @FloatOrArray
-    	def model(nu, **kwargs):
-    	    return np.array(rm) * convert_units("uK_CMB", "uK_RJ", nu)
-    	return model
+        def model(nu, **kwargs):
+            return np.array(rm) * convert_units("uK_CMB", "uK_RJ", nu)
+        return model
 
     def synfast(self):
         """Function for the calculation of lensed CMB maps directly from
@@ -939,9 +939,9 @@ class CMB(object):
         """
         # get the spectra. These are in CAMB format, we discard the last
         # three corresponding to dd, dt, de, respectively.
-    	ell, tt, ee, bb, te, _, _, _ = self.CMB_Specs
-    	lmax_cl = len(ell) + 1
-    	ell = np.arange(lmax_cl + 1)
+        ell, tt, ee, bb, te, _, _, _ = self.CMB_Specs
+        lmax_cl = len(ell) + 1
+        ell = np.arange(lmax_cl + 1)
 
         # in CAMB format so we must divide by the scaling factor
         factor = ell * (ell + 1.) / 2. / np.pi
@@ -970,8 +970,8 @@ class CMB(object):
 
         """
         @FloatOrArray
-    	def model(nu, **kwargs):
-    	    return np.array([self.A_I, self.A_Q, self.A_U]) * convert_units("uK_CMB", "uK_RJ", nu)
+        def model(nu, **kwargs):
+            return np.array([self.A_I, self.A_Q, self.A_U]) * convert_units("uK_CMB", "uK_RJ", nu)
         return model
 
 def power_law(nu, nu_0, b):
@@ -1115,19 +1115,19 @@ https://github.com/amaurea/taylens
 
 """
 def simulate_tebp_correlated(cl_tebp_arr, nside, lmax, seed):
-	"""This generates correlated T,E,B and Phi maps
+        """This generates correlated T,E,B and Phi maps
 
         """
-	np.random.seed(seed)
-	alms=hp.synalm(cl_tebp_arr, lmax = lmax, new = True)
-	aphi=alms[-1]
-	acmb=alms[0 : -1]
-	#Set to zero above map resolution to avoid aliasing
-	beam_cut=np.ones(3 * nside)
-	for ac in acmb:
-		hp.almxfl(ac, beam_cut, inplace = True)
-	cmb=np.array(hp.alm2map(acmb, nside, pol = True, verbose = False))
-	return cmb, aphi
+        np.random.seed(seed)
+        alms=hp.synalm(cl_tebp_arr, lmax = lmax, new = True)
+        aphi=alms[-1]
+        acmb=alms[0 : -1]
+        #Set to zero above map resolution to avoid aliasing
+        beam_cut=np.ones(3 * nside)
+        for ac in acmb:
+                hp.almxfl(ac, beam_cut, inplace = True)
+        cmb=np.array(hp.alm2map(acmb, nside, pol = True, verbose = False))
+        return cmb, aphi
 
 def taylor_interpol_iter(m, pos, order=3, verbose=False, lmax=None):
     """Given a healpix map m[npix], and a set of positions
@@ -1140,7 +1140,7 @@ def taylor_interpol_iter(m, pos, order=3, verbose=False, lmax=None):
     """
     nside = hp.npix2nside(m.size)
     if lmax is None:
-    	lmax = 3 * nside
+        lmax = 3 * nside
     # Find the healpix pixel centers closest to pos,
     # and our deviation from these pixel centers.
     ipos = hp.ang2pix(nside, pos[0], pos[1])
@@ -1184,7 +1184,7 @@ def taylor_interpol_iter(m, pos, order=3, verbose=False, lmax=None):
                     # Use these to compute the next level
                     for j in range(i, min(i + 2, o + 1)):
                             if used[j]:
-                            	continue
+                                continue
                             N = comb(o, j) / factorial(o)
                             res += N * derivs2[j][ipos] * dpos[0]**(o-j) * dpos[1]**j
                             used[j] = True
@@ -1228,9 +1228,9 @@ def offset_pos(ipos, dtheta, dphi, pol=False, geodesic=False):
     """
     opos = np.zeros(ipos.shape)
     if pol and not geodesic:
-    	orot = np.zeros(ipos.shape)
+        orot = np.zeros(ipos.shape)
     else:
-    	orot = None
+        orot = None
     if not geodesic:
             # Loop over chunks in order to conserve memory
             step = 0x10000
@@ -1281,9 +1281,9 @@ def apply_rotation(m, rot):
 
     """
     if len(m) < 3:
-    	return m
+        return m
     if rot is None:
-    	return m
+        return m
     m = np.asarray(m)
     res = m.copy()
     res[1] = rot[0] * m[1] - rot[1] * m[2]
@@ -1293,10 +1293,10 @@ def apply_rotation(m, rot):
 # Set up progress prints
 t0 = None
 def silent(msg):
-	pass
+        pass
 
 def tprint(msg):
         global t0
         if t0 is None:
-        	t0 = time.time()
+                t0 = time.time()
         print >> sys.stderr, "%8.2f %s" % (time.time() - t0, msg)
