@@ -341,7 +341,7 @@ class Instrument(object):
             bpass_signal = Sky.signal(use_bandpass = Sky.Uses_HD17)
             # convert to Jysr in order to integrate over bandpass
             signal_Jysr = lambda nu: bpass_signal(nu) * convert_units("uK_RJ", "Jysr", nu)
-            bpass_integrated = np.array(map(lambda (f, w): bandpass(f, w, signal_Jysr), self.Channels))
+            bpass_integrated = np.array([bandpass(f, w, signal_Jysr) for (f, w) in self.Channels])
             # We now add an exception in for the case of the HD_17 model. This requires that the model be initialised
             # with the bandpass information in order for the model to be computaitonally efficient. Therefore this is
             # evaluated differently from other models. The function HD_17_bandpass() accepts a tuple (freqs, weights)
@@ -360,8 +360,7 @@ class Instrument(object):
         over the stated frequency range.
 
         """
-        norm = lambda (freqs, weights): (freqs, weights / np.trapz(weights, freqs * 1.e9))
-        self.Channels = map(norm, self.Channels)
+        self.Channels = [(freqs, weights / np.trapz(weights, freqs * 1.e9)) for (freqs, weights) in self.Channels]
         return 
             
     def smoother(self, map_array):
@@ -375,8 +374,7 @@ class Instrument(object):
         if not self.Use_Smoothing:
             return map_array
         elif self.Use_Smoothing:
-            smooth = lambda (m, b): hp.smoothing(m, fwhm = np.pi / 180. * b / 60., verbose = False)
-            return np.array(map(smooth, zip(map_array, self.Beams)))
+            return np.array([hp.smoothing(m, fwhm = np.pi / 180. * b / 60., verbose = False) for (m, b) in zip(map_array, self.Beams)])
         else:
             print("Please set 'Use_Smoothing' in Instrument object.")
             sys.exit(1)
@@ -513,7 +511,7 @@ def bandpass(frequencies, weights, signal):
     check_bpass_weights_normalisation(weights, frequency_separation)
     # define the integration: integrand = signal(nu) * w(nu) * d(nu)
     # signal is already in MJysr.
-    return sum(map(lambda (nu, w): signal(nu) * w * frequency_separation, zip(frequencies, weights)))
+    return sum([signal(nu) * w * frequency_separation for (nu, w) in zip(frequencies, weights)])
 
 
 def check_bpass_weights_normalisation(weights, spacing):
