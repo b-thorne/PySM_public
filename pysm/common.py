@@ -36,7 +36,7 @@ def FloatOrArray(model):
                     print("Frequencies must be float or convertable to 1d array.")
                     sys.exit(1)
                     """If it is 1d array evaluate model function over all its elements."""
-                return np.array(map(lambda x: model(x, **kwargs), list(nu_1darray)))
+                return np.array(list(map(lambda x: model(x, **kwargs), list(nu_1darray))))
             except ValueError:
                 """Fail if not convertable to 1d array"""
                 print("Frequencies must be either float or convertable to array.")
