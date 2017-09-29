@@ -6,15 +6,15 @@
 .. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk>
 """
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 import numpy as np
 import healpy as hp
 import os, sys, time
 import scipy.constants as constants
 from scipy.interpolate import interp1d, RectBivariateSpline
 from scipy.misc import factorial, comb
-from common import read_key, convert_units, FloatOrArray, invert_safe, B
-from nominal import template
+from .common import read_key, convert_units, FloatOrArray, invert_safe, B
+from .nominal import template
 
 class Synchrotron(object):
     """Class defining attributes and scaling laws of the synchrotron

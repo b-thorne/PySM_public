@@ -6,14 +6,14 @@
 .. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk> 
 """
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 from scipy import interpolate, integrate
 import numpy as np
 import healpy as hp
 import scipy.constants as constants
 import os, sys
-from components import Dust, Synchrotron, Freefree, AME, CMB
-from common import read_key, convert_units, bandpass_convert_units, check_lengths
+from .components import Dust, Synchrotron, Freefree, AME, CMB
+from .common import read_key, convert_units, bandpass_convert_units, check_lengths
 
 class Sky(object):
     """Model sky signal of Galactic foregrounds.

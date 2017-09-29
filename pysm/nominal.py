@@ -1,4 +1,5 @@
-from common import read_map
+from __future__ import absolute_import
+from .common import read_map
 import numpy as np
 from healpy import nside2npix
 import os
