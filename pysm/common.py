@@ -6,6 +6,7 @@
 .. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk>
 """
 
+from __future__ import print_function
 import healpy as hp
 import numpy as np
 import scipy.constants as constants
@@ -327,7 +328,7 @@ def tophat_bandpass(nu_c, delta_nu, samples = 50):
     """
     freqs = np.linspace(nu_c - delta_nu / 2., nu_c + delta_nu / 2., samples)
     weights = np.ones_like(freqs) / (freqs.size * delta_nu / samples)
-    print np.sum(weights * delta_nu)
+    print(np.sum(weights * delta_nu))
     return (freqs, weights)
 
 def plot_maps(ins_conf, plot_odir):

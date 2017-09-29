@@ -6,6 +6,7 @@
 .. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk>
 """
 
+from __future__ import print_function
 import numpy as np
 import healpy as hp
 import os, sys, time
@@ -1299,4 +1300,4 @@ def tprint(msg):
         global t0
         if t0 is None:
                 t0 = time.time()
-        print >> sys.stderr, "%8.2f %s" % (time.time() - t0, msg)
+        print("%8.2f %s" % (time.time() - t0, msg), file=sys.stderr)

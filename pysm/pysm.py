@@ -6,6 +6,7 @@
 .. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk> 
 """
 
+from __future__ import print_function
 from scipy import interpolate, integrate
 import numpy as np
 import healpy as hp
@@ -459,8 +460,8 @@ class Instrument(object):
         if not self.Use_Bandpass:
             if self.Add_Noise:
                 for f, o, n in zip(self.Frequencies, output, noise):
-                    print np.std(n, axis = 1)# * np.sqrt(4. * np.pi / float(hp.nside2npix(128)) * (180. * 60. / np.pi) ** 2)
-                    print np.std(o, axis = 1)
+                    print(np.std(n, axis = 1))# * np.sqrt(4. * np.pi / float(hp.nside2npix(128)) * (180. * 60. / np.pi) ** 2)
+                    print(np.std(o, axis = 1))
                     hp.write_map(self.file_path(f = f, extra_info = "noise"), n)
                     hp.write_map(self.file_path(f = f, extra_info = "total"), o + n)
             elif not self.Add_Noise:
