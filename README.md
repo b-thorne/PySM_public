@@ -10,7 +10,7 @@ If you use the code for any publications, please acknowledge it and cite:
 
 This code generates full-sky simulations of Galactic foregrounds in intensity and
 polarization relevant for CMB experiments. Please see the documentation on
-[Read the docs]() or go to the ./docs/ and run `make html` - this will build the docs, written using Sphinx, and put them in ./docs/build/
+[Read the docs](http://pysm-public.readthedocs.io) or go to the `./docs/` folder and run `make html` - this will build the docs, written using Sphinx, and put them in `./docs/build/`
 
 ## Quick Install
 
