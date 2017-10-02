@@ -36,7 +36,7 @@ def FloatOrArray(model):
                     print("Frequencies must be float or convertable to 1d array.")
                     sys.exit(1)
                     """If it is 1d array evaluate model function over all its elements."""
-                return np.array(list(map(lambda x: model(x, **kwargs), list(nu_1darray))))
+                return np.array([model(x, **kwargs) for x in nu_1darray])
             except ValueError:
                 """Fail if not convertable to 1d array"""
                 print("Frequencies must be either float or convertable to array.")
@@ -311,7 +311,7 @@ def check_lengths(*args):
     :return: True if lengths are equal, else False -- bool
 
     """
-    return (len(set(map(lambda x: len(x), args))) <= 1)
+    return (len(set([len(x) for x in args])) <= 1)
 
 def tophat_bandpass(nu_c, delta_nu, samples = 50):
     """Calculate a tophat bandpass for a given central frequency and width. 

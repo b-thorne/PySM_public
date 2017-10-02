@@ -61,7 +61,7 @@ class Sky(object):
         components.
         """
         self.__config = config
-        self.__components = config.keys()
+        self.__components = list(config.keys())
 
         if 'cmb' in self.Components:
             self.cmb = component_adder(CMB, self.Config['cmb'])
@@ -350,7 +350,7 @@ class Instrument(object):
             # class was first instantiated, if use_bandpass = True. Note that the dust signal will still contribute
             # to the bpass_integrated sum in the evaluation above, but will be zero.
             if Sky.Uses_HD17:
-                bpass_integrated += np.array(map(Sky.HD_17_bpass, self.Channels))
+                bpass_integrated += np.array(list(map(Sky.HD_17_bpass, self.Channels)))
             return bpass_integrated
         else:
             print("Please set 'Use_Bandpass' for Instrument object.")
@@ -431,14 +431,14 @@ class Instrument(object):
         elif self.Use_Bandpass:
             # In the case of a given bandpass we calculate the unit conversion as explained in the documentation
             # of bandpass_convert_units. 
-            Uc_signal = np.array(map(lambda channel: bandpass_convert_units(self.Output_Units, channel), self.Channels))
+            Uc_signal = np.array([bandpass_convert_units(self.Output_Units, channel) for channel in self.Channels])
         if self.Add_Noise:
             # If noise requested also multiple the calculated noise.
             if not self.Use_Bandpass:
                 Uc_noise = np.array(convert_units("uK_CMB", self.Output_Units, self.Frequencies))
             elif self.Use_Bandpass:
                 # first convert noise to Jysr then apply the same unit conversion as used for the signal.
-                Uc_noise = Uc_signal * np.array(map(lambda channel: 1. / bandpass_convert_units("uK_CMB", channel), self.Channels))
+                Uc_noise = Uc_signal * np.array([1. / bandpass_convert_units("uK_CMB", channel) for channel in self.Channels])
         elif not self.Add_Noise:
             Uc_noise = np.zeros_like(Uc_signal)
         return Uc_signal[:, None, None] * map_array, Uc_noise[:, None, None] * noise
@@ -557,7 +557,7 @@ def component_adder(component_class, dictionary_list, **kwargs):
     # each dictionary is a configuration dict used to
     # instantiate the component's class. We then take the
     # signal produced by that population.
-    population_signals = map(lambda dic: component_class(dic).signal(**kwargs), dictionary_list)
+    population_signals = [component_class(dic).signal(**kwargs) for dic in dictionary_list]
     # sigs is now a list of functions. Each function is the emission
     # due to a population of the component.
     def total_signal(nu, **kwargs):
