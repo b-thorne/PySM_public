@@ -6,13 +6,14 @@
 .. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk> 
 """
 
+from __future__ import absolute_import, print_function
 from scipy import interpolate, integrate
 import numpy as np
 import healpy as hp
 import scipy.constants as constants
 import os, sys
-from components import Dust, Synchrotron, Freefree, AME, CMB
-from common import read_key, convert_units, bandpass_convert_units, check_lengths
+from .components import Dust, Synchrotron, Freefree, AME, CMB
+from .common import read_key, convert_units, bandpass_convert_units, check_lengths
 
 class Sky(object):
     """Model sky signal of Galactic foregrounds.
@@ -60,7 +61,7 @@ class Sky(object):
         components.
         """
         self.__config = config
-        self.__components = config.keys()
+        self.__components = list(config.keys())
 
         if 'cmb' in self.Components:
             self.cmb = component_adder(CMB, self.Config['cmb'])
@@ -341,7 +342,7 @@ class Instrument(object):
             bpass_signal = Sky.signal(use_bandpass = Sky.Uses_HD17)
             # convert to Jysr in order to integrate over bandpass
             signal_Jysr = lambda nu: bpass_signal(nu) * convert_units("uK_RJ", "Jysr", nu)
-            bpass_integrated = np.array(map(lambda (f, w): bandpass(f, w, signal_Jysr), self.Channels))
+            bpass_integrated = np.array([bandpass(f, w, signal_Jysr) for (f, w) in self.Channels])
             # We now add an exception in for the case of the HD_17 model. This requires that the model be initialised
             # with the bandpass information in order for the model to be computaitonally efficient. Therefore this is
             # evaluated differently from other models. The function HD_17_bandpass() accepts a tuple (freqs, weights)
@@ -349,7 +350,7 @@ class Instrument(object):
             # class was first instantiated, if use_bandpass = True. Note that the dust signal will still contribute
             # to the bpass_integrated sum in the evaluation above, but will be zero.
             if Sky.Uses_HD17:
-                bpass_integrated += np.array(map(Sky.HD_17_bpass, self.Channels))
+                bpass_integrated += np.array(list(map(Sky.HD_17_bpass, self.Channels)))
             return bpass_integrated
         else:
             print("Please set 'Use_Bandpass' for Instrument object.")
@@ -360,8 +361,7 @@ class Instrument(object):
         over the stated frequency range.
 
         """
-        norm = lambda (freqs, weights): (freqs, weights / np.trapz(weights, freqs * 1.e9))
-        self.Channels = map(norm, self.Channels)
+        self.Channels = [(freqs, weights / np.trapz(weights, freqs * 1.e9)) for (freqs, weights) in self.Channels]
         return 
             
     def smoother(self, map_array):
@@ -375,8 +375,7 @@ class Instrument(object):
         if not self.Use_Smoothing:
             return map_array
         elif self.Use_Smoothing:
-            smooth = lambda (m, b): hp.smoothing(m, fwhm = np.pi / 180. * b / 60., verbose = False)
-            return np.array(map(smooth, zip(map_array, self.Beams)))
+            return np.array([hp.smoothing(m, fwhm = np.pi / 180. * b / 60., verbose = False) for (m, b) in zip(map_array, self.Beams)])
         else:
             print("Please set 'Use_Smoothing' in Instrument object.")
             sys.exit(1)
@@ -432,14 +431,14 @@ class Instrument(object):
         elif self.Use_Bandpass:
             # In the case of a given bandpass we calculate the unit conversion as explained in the documentation
             # of bandpass_convert_units. 
-            Uc_signal = np.array(map(lambda channel: bandpass_convert_units(self.Output_Units, channel), self.Channels))
+            Uc_signal = np.array([bandpass_convert_units(self.Output_Units, channel) for channel in self.Channels])
         if self.Add_Noise:
             # If noise requested also multiple the calculated noise.
             if not self.Use_Bandpass:
                 Uc_noise = np.array(convert_units("uK_CMB", self.Output_Units, self.Frequencies))
             elif self.Use_Bandpass:
                 # first convert noise to Jysr then apply the same unit conversion as used for the signal.
-                Uc_noise = Uc_signal * np.array(map(lambda channel: 1. / bandpass_convert_units("uK_CMB", channel), self.Channels))
+                Uc_noise = Uc_signal * np.array([1. / bandpass_convert_units("uK_CMB", channel) for channel in self.Channels])
         elif not self.Add_Noise:
             Uc_noise = np.zeros_like(Uc_signal)
         return Uc_signal[:, None, None] * map_array, Uc_noise[:, None, None] * noise
@@ -461,8 +460,8 @@ class Instrument(object):
         if not self.Use_Bandpass:
             if self.Add_Noise:
                 for f, o, n in zip(self.Frequencies, output, noise):
-                    print np.std(n, axis = 1)# * np.sqrt(4. * np.pi / float(hp.nside2npix(128)) * (180. * 60. / np.pi) ** 2)
-                    print np.std(o, axis = 1)
+                    print(np.std(n, axis = 1))# * np.sqrt(4. * np.pi / float(hp.nside2npix(128)) * (180. * 60. / np.pi) ** 2)
+                    print(np.std(o, axis = 1))
                     hp.write_map(self.file_path(f = f, extra_info = "noise"), n)
                     hp.write_map(self.file_path(f = f, extra_info = "total"), o + n)
             elif not self.Add_Noise:
@@ -513,7 +512,7 @@ def bandpass(frequencies, weights, signal):
     check_bpass_weights_normalisation(weights, frequency_separation)
     # define the integration: integrand = signal(nu) * w(nu) * d(nu)
     # signal is already in MJysr.
-    return sum(map(lambda (nu, w): signal(nu) * w * frequency_separation, zip(frequencies, weights)))
+    return sum([signal(nu) * w * frequency_separation for (nu, w) in zip(frequencies, weights)])
 
 
 def check_bpass_weights_normalisation(weights, spacing):
@@ -558,7 +557,7 @@ def component_adder(component_class, dictionary_list, **kwargs):
     # each dictionary is a configuration dict used to
     # instantiate the component's class. We then take the
     # signal produced by that population.
-    population_signals = map(lambda dic: component_class(dic).signal(**kwargs), dictionary_list)
+    population_signals = [component_class(dic).signal(**kwargs) for dic in dictionary_list]
     # sigs is now a list of functions. Each function is the emission
     # due to a population of the component.
     def total_signal(nu, **kwargs):

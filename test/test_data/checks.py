@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import healpy as hp
 import subprocess
@@ -31,13 +32,13 @@ def compare_maps(component,i_check) :
     return 1
 
 def run_check(i_check,component) :
-    print "Running check %d..."%i_check
+    print("Running check %d..."%i_check)
     os.system('python main.py test/check%d_config.ini > log_checks 2>&1'%i_check)
     passed=compare_maps(component,i_check)
     if passed :
-        print bcolors.OKGREEN+"   PASSED"+bcolors.ENDC
+        print(bcolors.OKGREEN+"   PASSED"+bcolors.ENDC)
     else :
-        print bcolors.FAIL+"   FAILED"+bcolors.ENDC
+        print(bcolors.FAIL+"   FAILED"+bcolors.ENDC)
     subprocess.call(['rm', '-r', 'test/Output'])
     return passed
 
@@ -45,4 +46,4 @@ n_passed=0; n_total=0
 for i_check,component in zip([1,2,3,4,5,6,7,8,9,10,11],['therm','synch','spinn','freef','cmb', 'therm', 'synch', 'spinn', 'therm', 'synch', 'therm']) :
     n_passed+=run_check(i_check,component)
     n_total+=1
-print "%d tests passed "%n_passed+"out of %d"%n_total
+print("%d tests passed "%n_passed+"out of %d"%n_total)

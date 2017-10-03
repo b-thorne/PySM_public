@@ -6,6 +6,7 @@
 .. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk>
 """
 
+from __future__ import print_function
 import healpy as hp
 import numpy as np
 import scipy.constants as constants
@@ -35,7 +36,7 @@ def FloatOrArray(model):
                     print("Frequencies must be float or convertable to 1d array.")
                     sys.exit(1)
                     """If it is 1d array evaluate model function over all its elements."""
-                return np.array(map(lambda x: model(x, **kwargs), list(nu_1darray)))
+                return np.array([model(x, **kwargs) for x in nu_1darray])
             except ValueError:
                 """Fail if not convertable to 1d array"""
                 print("Frequencies must be either float or convertable to array.")
@@ -71,9 +72,9 @@ def read_key(Class, keyword, dictionary):
     :returns: does not return, but modifies inputs.
     """
     try:
-	setattr(Class, '_%s__%s'%(Class.__class__.__name__, keyword), dictionary[keyword])
+        setattr(Class, '_%s__%s'%(Class.__class__.__name__, keyword), dictionary[keyword])
     except KeyError: 
-	print("%s not set."%keyword)
+        print("%s not set."%keyword)
     return
 
 def convert_units(unit1, unit2, nu):
@@ -89,76 +90,76 @@ def convert_units(unit1, unit2, nu):
     :returns: unit conversion coefficient - float, numpy.ndarray.
     """
     if "K_CMB" in unit1:
-	#first deal with the unit conversion
-	if "Jysr" in unit2:
-	    conversion_factor = K_CMB2Jysr(nu) 
-	elif "K_RJ" in unit2:
-	    conversion_factor = K_CMB2Jysr(nu) / K_RJ2Jysr(nu)
-	elif "K_CMB" in unit2:
-	    conversion_factor = np.ones_like(nu)
-	else:
-	    print("Incorrect format or unit.")
+        #first deal with the unit conversion
+        if "Jysr" in unit2:
+            conversion_factor = K_CMB2Jysr(nu) 
+        elif "K_RJ" in unit2:
+            conversion_factor = K_CMB2Jysr(nu) / K_RJ2Jysr(nu)
+        elif "K_CMB" in unit2:
+            conversion_factor = np.ones_like(nu)
+        else:
+            print("Incorrect format or unit.")
 
     elif "K_RJ" in unit1:
-	if "Jysr" in unit2:
-	    conversion_factor = K_RJ2Jysr(nu)
-	elif "K_CMB" in unit2:
-	    conversion_factor = K_RJ2Jysr(nu) / K_CMB2Jysr(nu)
-	elif "K_RJ" in unit2:
-	    conversion_factor = np.ones_like(nu)
-	else: 
-	    print("Incorrect format or unit.")
+        if "Jysr" in unit2:
+            conversion_factor = K_RJ2Jysr(nu)
+        elif "K_CMB" in unit2:
+            conversion_factor = K_RJ2Jysr(nu) / K_CMB2Jysr(nu)
+        elif "K_RJ" in unit2:
+            conversion_factor = np.ones_like(nu)
+        else: 
+            print("Incorrect format or unit.")
 
     elif "Jysr" in unit1:
-	if "Jysr" in unit2:
-	    conversion_factor = np.ones_like(nu)
-	elif "K_RJ" in unit2:
-	    conversion_factor = 1. / K_RJ2Jysr(nu)
-	elif "K_CMB" in unit2:
-	    conversion_factor = 1. / K_CMB2Jysr(nu)
-	else:
-	    print("Incorrect format or unit.")
+        if "Jysr" in unit2:
+            conversion_factor = np.ones_like(nu)
+        elif "K_RJ" in unit2:
+            conversion_factor = 1. / K_RJ2Jysr(nu)
+        elif "K_CMB" in unit2:
+            conversion_factor = 1. / K_CMB2Jysr(nu)
+        else:
+            print("Incorrect format or unit.")
 
     # Now deal with the magnitude
     if "n" in unit1[0]:
-	prefac = 1.e-9
+        prefac = 1.e-9
     elif "u" in unit1[0]:
-	prefac = 1.e-6
+        prefac = 1.e-6
     elif "m" in unit1[0]:
-	prefac = 1.e-3
+        prefac = 1.e-3
     elif "k" in unit1[0]:
-	prefac = 1.e3
+        prefac = 1.e3
     elif "M" in unit1[0]:
-	prefac = 1.e6
+        prefac = 1.e6
     elif "G" in unit1[0]:
-	prefac = 1.e9
+        prefac = 1.e9
     elif "K" in unit1[0]:
-	prefac = 1.
+        prefac = 1.
     elif "J" in unit1[0]:
-	prefac = 1.
+        prefac = 1.
     else:
-	print("Invalid format for unit1 in convert_units")
-	sys.exit(1)
+        print("Invalid format for unit1 in convert_units")
+        sys.exit(1)
 
     if "n" in unit2[0]:
-	postfac = 1.e9
+        postfac = 1.e9
     elif "u" in unit2[0]:
-	postfac = 1.e6
+        postfac = 1.e6
     elif "m" in unit2[0]:
-	postfac = 1.e3
+        postfac = 1.e3
     elif "k" in unit2[0]:
-	postfac = 1.e-3
+        postfac = 1.e-3
     elif "M" in unit2[0]:
-	postfac = 1.e-6
+        postfac = 1.e-6
     elif "G" in unit2[0]:
-	postfac = 1.e-9
+        postfac = 1.e-9
     elif "K" in unit2[0]:
-	postfac = 1.
+        postfac = 1.
     elif "J" in unit2[0]:
-	postfac = 1.
+        postfac = 1.
     else:
-	print("Invalid format for unit2 in convert_units")
-	sys.exit(1)
+        print("Invalid format for unit2 in convert_units")
+        sys.exit(1)
 
     return np.array(conversion_factor * prefac * postfac)
 
@@ -292,12 +293,12 @@ def invert_safe(m):
     mb = m.copy()
     w_ok = False
     while not w_ok :
-	w, v = np.linalg.eigh(mb)
-	wmin = np.min(w)
-	if wmin > 0:
-	    w_ok = True
-	else:
-	    mb += np.diag(2. * np.max([1E-14, -wmin]) * np.ones(len(mb)))
+        w, v = np.linalg.eigh(mb)
+        wmin = np.min(w)
+        if wmin > 0:
+            w_ok = True
+        else:
+            mb += np.diag(2. * np.max([1E-14, -wmin]) * np.ones(len(mb)))
     winv = 1. / w
     return np.dot(v, np.dot(np.diag(winv), np.transpose(v)))
         
@@ -310,7 +311,7 @@ def check_lengths(*args):
     :return: True if lengths are equal, else False -- bool
 
     """
-    return (len(set(map(lambda x: len(x), args))) <= 1)
+    return (len(set([len(x) for x in args])) <= 1)
 
 def tophat_bandpass(nu_c, delta_nu, samples = 50):
     """Calculate a tophat bandpass for a given central frequency and width. 
@@ -327,7 +328,7 @@ def tophat_bandpass(nu_c, delta_nu, samples = 50):
     """
     freqs = np.linspace(nu_c - delta_nu / 2., nu_c + delta_nu / 2., samples)
     weights = np.ones_like(freqs) / (freqs.size * delta_nu / samples)
-    print np.sum(weights * delta_nu)
+    print(np.sum(weights * delta_nu))
     return (freqs, weights)
 
 def plot_maps(ins_conf, plot_odir):

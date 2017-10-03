@@ -81,16 +81,16 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
         # Read in the fits file. This contains only the HFI frequencies 100 -> 857.
         planck_HFI_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), "test_data" , "HFI_RIMO_R1.10.fits")
         hdu = fits.open(planck_HFI_file)
-        bandpasses = map(lambda i: hdu[i].data, range(2, 8))
+        bandpasses = [hdu[i].data for i in range(2, 8)]
         # The table contains 4 lists: wavenumber, transmission, 1-sigma uncertainty, flag.
         # We are only interested in wavenumber and transmission.
         channels = []
         for b in bandpasses:
-            wavenumber, transmission, _, _ = zip(*b)
+            wavenumber, transmission, _, _ = list(zip(*b))
             frequency = 1e-7 * constants.c * np.array(wavenumber)
             # exclude the element frqeuency[0] = 0
             filt = lambda x: (x[0] > 1.) & (x[0] < 1200)
-            freqs, weights = zip(*filter(filt, zip(frequency, transmission)))
+            freqs, weights = list(zip(*filter(filt, zip(frequency, transmission))))
             channels.append((np.array(freqs), np.array(weights)))
             
         """Planck-provided coefficients for K_CMB to MJysr.
