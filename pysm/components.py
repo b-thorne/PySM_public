@@ -322,6 +322,14 @@ class Dust(object):
             print("Dust attribute 'Add_Decorrelation' not set.")
             sys.exit(1)
 
+    @property
+    def nside(self):
+        try:
+            return self.__nside
+        except AttributeError:
+            print("Dust attribute 'nside' not set.")
+            sys.exit(1)
+
     def signal(self):
         """Function to return the selected SED.
 
@@ -434,7 +442,7 @@ class Dust(object):
 
         #now draw the random realisation of uval if draw_uval = true
         if self.Draw_Uval:
-            self.Uval = self.draw_uval(self.Draw_Uval_Seed, hp.npix2nside(len(self.A_I)))
+            self.Uval = self.draw_uval(self.Draw_Uval_Seed, self.nside)
         elif not self.Draw_Uval:
             pass
         else:
@@ -492,22 +500,19 @@ class Dust(object):
                 scaling_I = RJ_factor * eval_HD17_I(nu_break, self.Nu_0_I)
                 scaling_P = RJ_factor * eval_HD17_P(nu_break, self.Nu_0_P)
 
-                try:
-                    scaling_I = hp.ud_grade(scaling_I, nside_out = hp.npix2nside(len(self.A_I)))
-                    scaling_P = hp.ud_grade(scaling_P, nside_out = hp.npix2nside(len(self.A_I)))
-                except IndexError:
-                    pass
+            else:
 
-                return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
-
-            #calculate the intensity scaling from reference frequency
-            #self.Nu_0_I to frequency nu.
-            scaling_I = eval_HD17_I(nu, self.Nu_0_I)
-            scaling_P = eval_HD17_P(nu, self.Nu_0_P)
+                #calculate the intensity scaling from reference frequency
+                #self.Nu_0_I to frequency nu.
+                scaling_I = eval_HD17_I(nu, self.Nu_0_I)
+                scaling_P = eval_HD17_P(nu, self.Nu_0_P)
 
             try:
-                scaling_I = hp.ud_grade(scaling_I, nside_out = hp.npix2nside(len(self.A_I)))
-                scaling_P = hp.ud_grade(scaling_P, nside_out = hp.npix2nside(len(self.A_I)))
+                scaling_I = hp.ud_grade(scaling_I, nside_out = self.nside)
+                scaling_P = hp.ud_grade(scaling_P, nside_out = self.nside)
+                if not self.pixel_indices is None:
+                    scaling_I = scaling_I[self.pixel_indices]
+                    scaling_P = scaling_P[self.pixel_indices]
             except IndexError:
                 pass
             return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
