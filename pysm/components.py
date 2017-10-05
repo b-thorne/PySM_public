@@ -865,6 +865,13 @@ class CMB(object):
         except AttributeError:
             print("CMB attribute 'A_U' not set.")
 
+    @property
+    def pixel_indices(self):
+        try:
+            return self.__pixel_indices
+        except AttributeError:
+            print("CMB attribute 'pixel_indices' not set.")
+
     def signal(self):
         """Function to return the selected SED.
 
@@ -935,7 +942,11 @@ class CMB(object):
 
         @FloatOrArray
         def model(nu, **kwargs):
-            return np.array(rm) * convert_units("uK_CMB", "uK_RJ", nu)
+            cmb_map = np.array(rm) * convert_units("uK_CMB", "uK_RJ", nu)
+            if self.pixel_indices is None:
+                return cmb_map
+            else:
+                return cmb_map[:, self.pixel_indices]
         return model
 
     def synfast(self):
@@ -964,7 +975,12 @@ class CMB(object):
 
         @FloatOrArray
         def model(nu, **kwargs):
-            return np.array([T, Q, U]) * convert_units("uK_CMB", "uK_RJ", nu)
+            cmb_map = np.array([T, Q, U]) * convert_units("uK_CMB", "uK_RJ", nu)
+            if self.pixel_indices is None:
+                return cmb_map
+            else:
+                return cmb_map[:, self.pixel_indices]
+
         return model
 
     def pre_computed(self):
