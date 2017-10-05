@@ -323,6 +323,13 @@ class Dust(object):
             sys.exit(1)
 
     @property
+    def pixel_indices(self):
+        try:
+            return self.__pixel_indices
+        except AttributeError:
+            print("Dust attribute 'pixel_indices' not set.")
+
+    @property
     def nside(self):
         try:
             return self.__nside
