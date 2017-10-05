@@ -393,10 +393,9 @@ class Dust(object):
         #considered.Since nside is not a parameter Sky knows about we have to get it from
         #A_I, which is not ideal.
         uval_map = hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = nside)
-        if pixel_indices:
-            return uval_map[pixel_indices]
-        else:
-            return uval_map
+        if not pixel_indices is None:
+            uval_map = uval_map[pixel_indices]
+        return uval_map
 
     @staticmethod
     def read_hd_data():
