@@ -43,7 +43,7 @@ def FloatOrArray(model):
                 sys.exit(1)
     return decorator
 
-def read_map(fname, nside, field = (0), verbose = False):
+def read_map(fname, nside, field = (0), pixel_indices=None, verbose = False):
     """Convenience function wrapping healpy's read_map and upgrade /
     downgrade in one function.
     
@@ -53,11 +53,20 @@ def read_map(fname, nside, field = (0), verbose = False):
     :type nside: int.  
     :param field: fields of fits file from which to read.  
     :type field: tuple of ints.  
+    :param pixel_indices: read only a subset of pixels in RING ordering
+    :type field: array of ints.
     :param verbose: run in verbose mode.  
     :type verbose: bool.
     :returns: numpy.ndarray -- the maps that have been read. 
     """
-    return hp.ud_grade(hp.read_map(fname, field = field, verbose = verbose), nside_out = nside)
+    output_map = hp.ud_grade(hp.read_map(fname, field = field, verbose = verbose), nside_out = nside)
+    if pixel_indices is None:
+        return output_map
+    else:
+        try: # multiple components
+            return [each[pixel_indices] for each in output_map]
+        except IndexError: # single component
+            return output_map[pixel_indices]
 
 def read_key(Class, keyword, dictionary):
     """Gives the input class an attribute with the name of the keyword and
