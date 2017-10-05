@@ -9,7 +9,8 @@ template = lambda x: os.path.join(data_dir, x)
 
 def models(key, nside, pixel_indices=None):
     model = eval(key)(nside, pixel_indices=pixel_indices)
-    model['pixel_indices'] = pixel_indices # include pixel indices in the model dictionary
+    for m in model:
+        m['pixel_indices'] = pixel_indices # include pixel indices in the model dictionary
     return model
 
 def d0(nside, pixel_indices=None):
