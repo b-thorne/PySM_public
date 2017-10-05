@@ -357,7 +357,7 @@ class Dust(object):
         return model
 
     @staticmethod
-    def draw_uval(seed, nside):
+    def draw_uval(seed, nside, pixel_indices=None):
         #Use Planck MBB temperature data to draw realisations of the temperature and spectral
         #index from normal distribution with mean equal to the maximum likelihood commander value,
         # and standard deviation equal to the commander std.
@@ -377,7 +377,11 @@ class Dust(object):
         #to note this for the future). We then udgrade the uval map to whatever nside is being
         #considered.Since nside is not a parameter Sky knows about we have to get it from
         #A_I, which is not ideal.
-        return hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = nside)
+        uval_map = hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = nside)
+        if pixel_indices:
+            return uval_map[pixel_indices]
+        else:
+            return uval_map
 
     @staticmethod
     def read_hd_data():
