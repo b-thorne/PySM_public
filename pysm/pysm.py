@@ -310,7 +310,7 @@ class Instrument(object):
         except AttributeError:
             print("Instrument attribute 'pixel_indices' not set.")
 
-    def observe(self, Sky):
+    def observe(self, Sky, write_outputs=True):
         """Evaluate and add instrument effects to Sky's signal function.
 
         This method evaluates the Sky class's signal method at the
@@ -329,7 +329,10 @@ class Instrument(object):
         output = self.smoother(output)
         noise = self.noiser()
         output, noise = self.unit_converter(output, noise)
-        self.writer(output, noise)
+        if write_outputs:
+            self.writer(output, noise)
+        else:
+            return output, noise
         return 
         
     def apply_bandpass(self, signal, Sky):

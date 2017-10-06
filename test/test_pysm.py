@@ -50,7 +50,7 @@ class TestNoise(unittest.TestCase):
         self.nside = 1024
         sigma_T = 4.
         sigma_P = np.sqrt(2.) * sigma_T
-        instrument_config = {
+        self.instrument_config = {
                 'frequencies' : np.array([23.]),
                 'sens_I' : np.array([sigma_T]),
                 'sens_P' : np.array([sigma_P]),
@@ -69,7 +69,6 @@ class TestNoise(unittest.TestCase):
         s1[0]['A_U'] = np.zeros(hp.nside2npix(self.nside))
         sky_config = {'synchrotron' : s1}
         self.sky = pysm.Sky(sky_config)
-        self.instrument = pysm.Instrument(instrument_config)
         
         pix2amin = np.sqrt(4. * np.pi * (180. / np.pi * 60.) ** 2 / float(hp.nside2npix(self.nside)))
 
@@ -80,7 +79,8 @@ class TestNoise(unittest.TestCase):
         os.remove(self.test_file)
         
     def test_noise(self):
-        self.instrument.observe(self.sky)
+        instrument = pysm.Instrument(self.instrument_config)
+        instrument.observe(self.sky)
         self.test_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_nu0023p00GHz_noise_nside%04d.fits"%self.nside)
         T, Q, U = pysm.read_map(self.test_file, self.nside, field = (0, 1, 2))
         T_std = np.std(T)
