@@ -303,6 +303,13 @@ class Instrument(object):
         except AttributeError:
             print("Instrument attribute 'Output_Units not set.'")
             
+    @property
+    def pixel_indices(self):
+        try:
+            return self.__pixel_indices
+        except AttributeError:
+            print("Instrument attribute 'pixel_indices' not set.")
+
     def observe(self, Sky):
         """Evaluate and add instrument effects to Sky's signal function.
 
@@ -391,7 +398,11 @@ class Instrument(object):
         :return: map plus noise, and noise -- numpy.ndarray
 
         """
-        npix = hp.nside2npix(self.Nside)
+        try:
+            npix = len(self.pixel_indices)
+        except TypeError:
+            npix = hp.nside2npix(self.Nside)
+
         if not self.Add_Noise:
             return np.zeros((len(self.Sens_I), 3, npix))
         elif self.Add_Noise:
