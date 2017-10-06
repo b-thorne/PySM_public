@@ -106,5 +106,5 @@ ENV/
 /site
 
 # vim
-.swp
-.swo
+*.swp
+*.swo
