@@ -96,7 +96,7 @@ class TestNoise(unittest.TestCase):
         
     def test_noise_partialsky(self):
         local_instrument_config = self.instrument_config.copy()
-        local_instrument_config["pixel_indices"] = np.arange(100, dtype=np.int)
+        local_instrument_config["pixel_indices"] = np.arange(20000, dtype=np.int)
         instrument = pysm.Instrument(local_instrument_config)
         noise = instrument.noiser()
 
