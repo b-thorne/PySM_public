@@ -13,7 +13,7 @@ import healpy as hp
 import scipy.constants as constants
 import os, sys
 from .components import Dust, Synchrotron, Freefree, AME, CMB
-from .common import read_key, convert_units, bandpass_convert_units, check_lengths
+from .common import read_key, convert_units, bandpass_convert_units, check_lengths, write_map
 
 class Sky(object):
     """Model sky signal of Galactic foregrounds.
@@ -476,19 +476,19 @@ class Instrument(object):
                 for f, o, n in zip(self.Frequencies, output, noise):
                     print(np.std(n, axis = 1))# * np.sqrt(4. * np.pi / float(hp.nside2npix(128)) * (180. * 60. / np.pi) ** 2)
                     print(np.std(o, axis = 1))
-                    hp.write_map(self.file_path(f = f, extra_info = "noise"), n, overwrite=True)
-                    hp.write_map(self.file_path(f = f, extra_info = "total"), o + n, overwrite=True)
+                    write_map(self.file_path(f = f, extra_info = "noise"), n, nside=self.Nside, pixel_indices=self.pixel_indices)
+                    write_map(self.file_path(f = f, extra_info = "total"), o + n, nside=self.Nside, pixel_indices=self.pixel_indices)
             elif not self.Add_Noise:
                 for f, o in zip(self.Frequencies, output):
-                    hp.write_map(self.file_path(f = f, extra_info = "total"), o, overwrite=True)
+                    write_map(self.file_path(f = f, extra_info = "total"), o, nside=self.Nside, pixel_indices=self.pixel_indices)
         elif self.Use_Bandpass:
             if self.Add_Noise:
                 for c, o, n in zip(self.Channel_Names, output, noise):
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o + n, overwrite=True)
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "noise"), n, overwrite=True)
+                    write_map(self.file_path(channel_name = c, extra_info = "total"), o + n, nside=self.Nside, pixel_indices=self.pixel_indices)
+                    write_map(self.file_path(channel_name = c, extra_info = "noise"), n, nside=self.Nside, pixel_indices=self.pixel_indices)
             elif not self.Add_Noise:
                 for c, o in zip(self.Channel_Names, output):
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o, overwrite=True)
+                    write_map(self.file_path(channel_name = c, extra_info = "total"), o, nside=self.Nside, pixel_indices=self.pixel_indices)
         return
 
     def print_info(self):

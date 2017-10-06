@@ -43,6 +43,27 @@ def FloatOrArray(model):
                 sys.exit(1)
     return decorator
 
+def write_map(fname, output_map, nside=None, pixel_indices=None):
+    """Convenience function wrapping healpy's write_map and handling of partial sky
+
+    :param fname: path to fits file.
+    :type fname: str.
+    :param output_map: map or maps to be written to disk
+    :type fname: np.ndarray.
+    :param nside: nside of the pixel indices, necessary just if pixel_indices is defined
+    :type nside: int.
+    :param pixel_indices: pixels in RING ordering where the output map is defined
+    :type field: array of ints.
+    """
+
+    if pixel_indices is None:
+        full_map = output_map
+    else:
+        assert not nside is None, "nside is required if you provide pixel_indices"
+        full_map = build_full_map(pixel_indices, output_map, nside)
+
+    hp.write_map(fname, full_map, overwrite=True)
+
 def read_map(fname, nside, field = (0), pixel_indices=None, verbose = False):
     """Convenience function wrapping healpy's read_map and upgrade /
     downgrade in one function.
@@ -380,3 +401,9 @@ def plot_maps(ins_conf, plot_odir):
     fig.savefig(opath, bbox_inches = 'tight', background = 'white')
 
     return fig
+
+def build_full_map(pixel_indices, pixel_values, nside):
+    n_maps = len(pixel_values) if pixel_values.ndim > 1 else 1
+    full_map = hp.UNSEEN * np.ones((n_maps, hp.nside2npix(nside)), dtype=np.float64)
+    full_map[:, pixel_indices] = pixel_values
+    return full_map
