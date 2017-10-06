@@ -104,7 +104,3 @@ ENV/
 
 # mkdocs documentation
 /site
-
-# vim
-.swp
-.swo

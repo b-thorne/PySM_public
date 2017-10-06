@@ -303,14 +303,7 @@ class Instrument(object):
         except AttributeError:
             print("Instrument attribute 'Output_Units not set.'")
             
-    @property
-    def pixel_indices(self):
-        try:
-            return self.__pixel_indices
-        except AttributeError:
-            print("Instrument attribute 'pixel_indices' not set.")
-
-    def observe(self, Sky, write_outputs=True):
+    def observe(self, Sky):
         """Evaluate and add instrument effects to Sky's signal function.
 
         This method evaluates the Sky class's signal method at the
@@ -329,10 +322,7 @@ class Instrument(object):
         output = self.smoother(output)
         noise = self.noiser()
         output, noise = self.unit_converter(output, noise)
-        if write_outputs:
-            self.writer(output, noise)
-        else:
-            return output, noise
+        self.writer(output, noise)
         return 
         
     def apply_bandpass(self, signal, Sky):
@@ -401,16 +391,12 @@ class Instrument(object):
         :return: map plus noise, and noise -- numpy.ndarray
 
         """
-        try:
-            npix = len(self.pixel_indices)
-        except TypeError:
-            npix = hp.nside2npix(self.Nside)
-
+        npix = hp.nside2npix(self.Nside)
         if not self.Add_Noise:
             return np.zeros((len(self.Sens_I), 3, npix))
         elif self.Add_Noise:
             # solid angle per pixel in amin2
-            pix_amin2 = 4. * np.pi / float(hp.nside2npix(self.Nside)) * (180. * 60. / np.pi) ** 2
+            pix_amin2 = 4. * np.pi / float(npix) * (180. * 60. / np.pi) ** 2
             """sigma_pix_I/P is std of noise per pixel. It is an array of length
             equal to the number of input maps."""
             sigma_pix_I = np.sqrt(self.Sens_I ** 2 / pix_amin2)
@@ -476,19 +462,19 @@ class Instrument(object):
                 for f, o, n in zip(self.Frequencies, output, noise):
                     print(np.std(n, axis = 1))# * np.sqrt(4. * np.pi / float(hp.nside2npix(128)) * (180. * 60. / np.pi) ** 2)
                     print(np.std(o, axis = 1))
-                    hp.write_map(self.file_path(f = f, extra_info = "noise"), n, overwrite=True)
-                    hp.write_map(self.file_path(f = f, extra_info = "total"), o + n, overwrite=True)
+                    hp.write_map(self.file_path(f = f, extra_info = "noise"), n)
+                    hp.write_map(self.file_path(f = f, extra_info = "total"), o + n)
             elif not self.Add_Noise:
                 for f, o in zip(self.Frequencies, output):
-                    hp.write_map(self.file_path(f = f, extra_info = "total"), o, overwrite=True)
+                    hp.write_map(self.file_path(f = f, extra_info = "total"), o)
         elif self.Use_Bandpass:
             if self.Add_Noise:
                 for c, o, n in zip(self.Channel_Names, output, noise):
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o + n, overwrite=True)
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "noise"), n, overwrite=True)
+                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o + n)
+                    hp.write_map(self.file_path(channel_name = c, extra_info = "noise"), n)
             elif not self.Add_Noise:
                 for c, o in zip(self.Channel_Names, output):
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o, overwrite=True)
+                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o)
         return
 
     def print_info(self):
@@ -596,7 +582,7 @@ def initialise_hd_dust_model_bandpass(hd_unint_signal, **kwargs):
 
     """
     #Draw map of uval using Commander dust data.
-    uval = Dust.draw_uval(kwargs['draw_uval_seed'], kwargs['nside'], kwargs.get('pixel_indices'))
+    uval = Dust.draw_uval(kwargs['draw_uval_seed'], hp.npix2nside(len(kwargs['A_I'])))
 
     #Read in the precomputed dust emission spectra as a function of lambda and U.
     data_sil, data_silfe, data_car, wav, uvec = Dust.read_hd_data()
