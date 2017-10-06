@@ -410,7 +410,7 @@ class Instrument(object):
             return np.zeros((len(self.Sens_I), 3, npix))
         elif self.Add_Noise:
             # solid angle per pixel in amin2
-            pix_amin2 = 4. * np.pi / float(npix) * (180. * 60. / np.pi) ** 2
+            pix_amin2 = 4. * np.pi / float(hp.nside2npix(self.Nside)) * (180. * 60. / np.pi) ** 2
             """sigma_pix_I/P is std of noise per pixel. It is an array of length
             equal to the number of input maps."""
             sigma_pix_I = np.sqrt(self.Sens_I ** 2 / pix_amin2)
