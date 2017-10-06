@@ -13,7 +13,7 @@ import healpy as hp
 import scipy.constants as constants
 import os, sys
 from .components import Dust, Synchrotron, Freefree, AME, CMB
-from .common import read_key, convert_units, bandpass_convert_units, check_lengths, write_map
+from .common import read_key, convert_units, bandpass_convert_units, check_lengths, write_map, build_full_map
 
 class Sky(object):
     """Model sky signal of Galactic foregrounds.
@@ -385,7 +385,16 @@ class Instrument(object):
         if not self.Use_Smoothing:
             return map_array
         elif self.Use_Smoothing:
-            return np.array([hp.smoothing(m, fwhm = np.pi / 180. * b / 60., verbose = False) for (m, b) in zip(map_array, self.Beams)])
+            if self.pixel_indices is None:
+                full_map = map_array
+            else:
+                full_map = build_full_map(self.pixel_indices, map_array, self.nside)
+            smoothed_map_array = np.array([hp.smoothing(m, fwhm = np.pi / 180. * b / 60., verbose = False) for (m, b) in zip(full_map, self.Beams)])
+            if self.pixel_indices is None:
+                return smoothed_map_array
+            else:
+                assert smoothed_map_array.ndim == 2, "Assuming map array is 2 dimensional (n_maps x n_pixels)"
+                return smoothed_map_array[..., self.pixel_indices]
         else:
             print("Please set 'Use_Smoothing' in Instrument object.")
             sys.exit(1)

@@ -403,7 +403,8 @@ def plot_maps(ins_conf, plot_odir):
     return fig
 
 def build_full_map(pixel_indices, pixel_values, nside):
-    n_maps = len(pixel_values) if pixel_values.ndim > 1 else 1
-    full_map = hp.UNSEEN * np.ones((n_maps, hp.nside2npix(nside)), dtype=np.float64)
-    full_map[:, pixel_indices] = pixel_values
+    output_shape = list(pixel_values.shape)
+    output_shape[-1] = hp.nside2npix(nside)
+    full_map = hp.UNSEEN * np.ones(output_shape, dtype=np.float64)
+    full_map[..., pixel_indices] = pixel_values
     return full_map

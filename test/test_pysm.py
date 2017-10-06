@@ -107,9 +107,16 @@ class TestNoise(unittest.TestCase):
 
     def test_noise_write_partialsky(self):
         local_instrument_config = self.instrument_config.copy()
-        local_instrument_config["pixel_indices"] = np.arange(20000, dtype=np.int)
+        npix = 20000
+        local_instrument_config["pixel_indices"] = np.arange(npix, dtype=np.int)
         instrument = pysm.Instrument(local_instrument_config)
-        instrument.observe(self.sky)
+        s1 = models("s1", self.nside, pixel_indices=local_instrument_config["pixel_indices"])
+        s1[0]['A_I'] = np.zeros(npix)
+        s1[0]['A_Q'] = np.zeros(npix)
+        s1[0]['A_U'] = np.zeros(npix)
+        sky_config = {'synchrotron' : s1}
+        partial_sky = pysm.Sky(sky_config)
+        instrument.observe(partial_sky)
         # use masked array to handle partial sky
         T, Q, U = hp.ma(pysm.read_map(self.test_file, self.nside, field = (0, 1, 2)))
         T_std = np.ma.std(T)
