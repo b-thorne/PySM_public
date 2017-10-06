@@ -94,6 +94,16 @@ class TestNoise(unittest.TestCase):
         np.testing.assert_almost_equal(Q_std, self.expected_P_std, decimal = 2)
         np.testing.assert_almost_equal(U_std, self.expected_P_std, decimal = 2)
         
+    def test_noise_partialsky(self):
+        local_instrument_config = self.instrument_config.copy()
+        local_instrument_config["pixel_indices"] = np.arange(100, dtype=np.int)
+        instrument = pysm.Instrument(local_instrument_config)
+        noise = instrument.noiser()
+
+        assert noise[0].shape == (3, len(local_instrument_config["pixel_indices"]))
+        np.testing.assert_almost_equal(np.std(noise[0][0]), self.expected_T_std, decimal = 2)
+        np.testing.assert_almost_equal(np.std(noise[0][1]), self.expected_P_std, decimal = 2)
+        np.testing.assert_almost_equal(np.std(noise[0][2]), self.expected_P_std, decimal = 2)
         
 def main():
     unittest.main()
