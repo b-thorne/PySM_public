@@ -47,14 +47,14 @@ class testCheck_Bandpass_Frequencies(unittest.TestCase):
         
 class TestNoise(unittest.TestCase):
     def setUp(self):
-        nside = 1024
+        self.nside = 1024
         sigma_T = 4.
         sigma_P = np.sqrt(2.) * sigma_T
-        instrument_config = {
+        self.instrument_config = {
                 'frequencies' : np.array([23.]),
                 'sens_I' : np.array([sigma_T]),
                 'sens_P' : np.array([sigma_P]),
-                'nside' : nside,
+                'nside' : self.nside,
                 'noise_seed' : 1234,
                 'use_bandpass' : False,
                 'add_noise' : True,
@@ -63,34 +63,47 @@ class TestNoise(unittest.TestCase):
                 'output_directory' : os.path.dirname(os.path.abspath(__file__)),
                 'output_prefix' : 'test',
             }
-        s1 = models("s1", nside)
-        s1[0]['A_I'] = np.zeros(hp.nside2npix(nside))
-        s1[0]['A_Q'] = np.zeros(hp.nside2npix(nside))
-        s1[0]['A_U'] = np.zeros(hp.nside2npix(nside))
+        s1 = models("s1", self.nside)
+        s1[0]['A_I'] = np.zeros(hp.nside2npix(self.nside))
+        s1[0]['A_Q'] = np.zeros(hp.nside2npix(self.nside))
+        s1[0]['A_U'] = np.zeros(hp.nside2npix(self.nside))
         sky_config = {'synchrotron' : s1}
-        sky = pysm.Sky(sky_config)
-        instrument = pysm.Instrument(instrument_config)
-        instrument.observe(sky)
-        self.test_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_nu0023p00GHz_noise_nside%04d.fits"%nside)
-        T, Q, U = pysm.read_map(self.test_file, nside, field = (0, 1, 2))
+        self.sky = pysm.Sky(sky_config)
+        
+        pix2amin = np.sqrt(4. * np.pi * (180. / np.pi * 60.) ** 2 / float(hp.nside2npix(self.nside)))
+
+        self.expected_T_std = sigma_T / pix2amin
+        self.expected_P_std = sigma_P / pix2amin
+        self.test_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_nu0023p00GHz_noise_nside%04d.fits"%self.nside)
+
+    def tearDown(self):
+        try:
+            os.remove(self.test_file)
+        except: # exception is different on different Python versions
+            pass
+        
+    def test_noise(self):
+        instrument = pysm.Instrument(self.instrument_config)
+        instrument.observe(self.sky)
+        T, Q, U = pysm.read_map(self.test_file, self.nside, field = (0, 1, 2))
         T_std = np.std(T)
         Q_std = np.std(Q)
         U_std = np.std(U)
-        
-        pix2amin = np.sqrt(4. * np.pi * (180. / np.pi * 60.) ** 2 / float(hp.nside2npix(nside)))
-        
-        self.check_T = T_std * pix2amin / sigma_T
-        self.check_Q = Q_std * pix2amin / sigma_P
-        self.check_U = U_std * pix2amin / sigma_P
 
-    def tearDown(self):
-        os.system("rm %s"%self.test_file)
+        np.testing.assert_almost_equal(T_std, self.expected_T_std, decimal = 2)
+        np.testing.assert_almost_equal(Q_std, self.expected_P_std, decimal = 2)
+        np.testing.assert_almost_equal(U_std, self.expected_P_std, decimal = 2)
         
-    def test_noise(self):
-        np.testing.assert_almost_equal(self.check_T, 1., decimal = 2)
-        np.testing.assert_almost_equal(self.check_Q, 1., decimal = 2)
-        np.testing.assert_almost_equal(self.check_U, 1., decimal = 2)
-        
+    def test_noise_partialsky(self):
+        local_instrument_config = self.instrument_config.copy()
+        local_instrument_config["pixel_indices"] = np.arange(20000, dtype=np.int)
+        instrument = pysm.Instrument(local_instrument_config)
+        noise = instrument.noiser()
+
+        assert noise[0].shape == (3, len(local_instrument_config["pixel_indices"]))
+        np.testing.assert_almost_equal(np.std(noise[0][0]), self.expected_T_std, decimal = 2)
+        np.testing.assert_almost_equal(np.std(noise[0][1]), self.expected_P_std, decimal = 2)
+        np.testing.assert_almost_equal(np.std(noise[0][2]), self.expected_P_std, decimal = 2)
         
 def main():
     unittest.main()

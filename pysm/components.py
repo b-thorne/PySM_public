@@ -322,6 +322,21 @@ class Dust(object):
             print("Dust attribute 'Add_Decorrelation' not set.")
             sys.exit(1)
 
+    @property
+    def pixel_indices(self):
+        try:
+            return self.__pixel_indices
+        except AttributeError:
+            print("Dust attribute 'pixel_indices' not set.")
+
+    @property
+    def nside(self):
+        try:
+            return self.__nside
+        except AttributeError:
+            print("Dust attribute 'nside' not set.")
+            sys.exit(1)
+
     def signal(self):
         """Function to return the selected SED.
 
@@ -357,7 +372,7 @@ class Dust(object):
         return model
 
     @staticmethod
-    def draw_uval(seed, nside):
+    def draw_uval(seed, nside, pixel_indices=None):
         #Use Planck MBB temperature data to draw realisations of the temperature and spectral
         #index from normal distribution with mean equal to the maximum likelihood commander value,
         # and standard deviation equal to the commander std.
@@ -377,7 +392,10 @@ class Dust(object):
         #to note this for the future). We then udgrade the uval map to whatever nside is being
         #considered.Since nside is not a parameter Sky knows about we have to get it from
         #A_I, which is not ideal.
-        return hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = nside)
+        uval_map = hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = nside)
+        if not pixel_indices is None:
+            uval_map = uval_map[pixel_indices]
+        return uval_map
 
     @staticmethod
     def read_hd_data():
@@ -430,7 +448,7 @@ class Dust(object):
 
         #now draw the random realisation of uval if draw_uval = true
         if self.Draw_Uval:
-            self.Uval = self.draw_uval(self.Draw_Uval_Seed, hp.npix2nside(len(self.A_I)))
+            self.Uval = self.draw_uval(self.Draw_Uval_Seed, self.nside)
         elif not self.Draw_Uval:
             pass
         else:
@@ -488,22 +506,19 @@ class Dust(object):
                 scaling_I = RJ_factor * eval_HD17_I(nu_break, self.Nu_0_I)
                 scaling_P = RJ_factor * eval_HD17_P(nu_break, self.Nu_0_P)
 
-                try:
-                    scaling_I = hp.ud_grade(scaling_I, nside_out = hp.npix2nside(len(self.A_I)))
-                    scaling_P = hp.ud_grade(scaling_P, nside_out = hp.npix2nside(len(self.A_I)))
-                except IndexError:
-                    pass
+            else:
 
-                return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
-
-            #calculate the intensity scaling from reference frequency
-            #self.Nu_0_I to frequency nu.
-            scaling_I = eval_HD17_I(nu, self.Nu_0_I)
-            scaling_P = eval_HD17_P(nu, self.Nu_0_P)
+                #calculate the intensity scaling from reference frequency
+                #self.Nu_0_I to frequency nu.
+                scaling_I = eval_HD17_I(nu, self.Nu_0_I)
+                scaling_P = eval_HD17_P(nu, self.Nu_0_P)
 
             try:
-                scaling_I = hp.ud_grade(scaling_I, nside_out = hp.npix2nside(len(self.A_I)))
-                scaling_P = hp.ud_grade(scaling_P, nside_out = hp.npix2nside(len(self.A_I)))
+                scaling_I = hp.ud_grade(scaling_I, nside_out = self.nside)
+                scaling_P = hp.ud_grade(scaling_P, nside_out = self.nside)
+                if not self.pixel_indices is None:
+                    scaling_I = scaling_I[self.pixel_indices]
+                    scaling_P = scaling_P[self.pixel_indices]
             except IndexError:
                 pass
             return np.array([scaling_I * self.A_I, scaling_P * self.A_Q, scaling_P * self.A_U])
@@ -861,6 +876,13 @@ class CMB(object):
         except AttributeError:
             print("CMB attribute 'A_U' not set.")
 
+    @property
+    def pixel_indices(self):
+        try:
+            return self.__pixel_indices
+        except AttributeError:
+            print("CMB attribute 'pixel_indices' not set.")
+
     def signal(self):
         """Function to return the selected SED.
 
@@ -931,7 +953,11 @@ class CMB(object):
 
         @FloatOrArray
         def model(nu, **kwargs):
-            return np.array(rm) * convert_units("uK_CMB", "uK_RJ", nu)
+            cmb_map = np.array(rm) * convert_units("uK_CMB", "uK_RJ", nu)
+            if self.pixel_indices is None:
+                return cmb_map
+            else:
+                return cmb_map[:, self.pixel_indices]
         return model
 
     def synfast(self):
@@ -960,7 +986,12 @@ class CMB(object):
 
         @FloatOrArray
         def model(nu, **kwargs):
-            return np.array([T, Q, U]) * convert_units("uK_CMB", "uK_RJ", nu)
+            cmb_map = np.array([T, Q, U]) * convert_units("uK_CMB", "uK_RJ", nu)
+            if self.pixel_indices is None:
+                return cmb_map
+            else:
+                return cmb_map[:, self.pixel_indices]
+
         return model
 
     def pre_computed(self):
