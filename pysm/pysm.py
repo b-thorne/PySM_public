@@ -473,19 +473,19 @@ class Instrument(object):
                 for f, o, n in zip(self.Frequencies, output, noise):
                     print(np.std(n, axis = 1))# * np.sqrt(4. * np.pi / float(hp.nside2npix(128)) * (180. * 60. / np.pi) ** 2)
                     print(np.std(o, axis = 1))
-                    hp.write_map(self.file_path(f = f, extra_info = "noise"), n)
-                    hp.write_map(self.file_path(f = f, extra_info = "total"), o + n)
+                    hp.write_map(self.file_path(f = f, extra_info = "noise"), n, overwrite=True)
+                    hp.write_map(self.file_path(f = f, extra_info = "total"), o + n, overwrite=True)
             elif not self.Add_Noise:
                 for f, o in zip(self.Frequencies, output):
-                    hp.write_map(self.file_path(f = f, extra_info = "total"), o)
+                    hp.write_map(self.file_path(f = f, extra_info = "total"), o, overwrite=True)
         elif self.Use_Bandpass:
             if self.Add_Noise:
                 for c, o, n in zip(self.Channel_Names, output, noise):
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o + n)
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "noise"), n)
+                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o + n, overwrite=True)
+                    hp.write_map(self.file_path(channel_name = c, extra_info = "noise"), n, overwrite=True)
             elif not self.Add_Noise:
                 for c, o in zip(self.Channel_Names, output):
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o)
+                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o, overwrite=True)
         return
 
     def print_info(self):
