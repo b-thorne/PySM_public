@@ -74,14 +74,17 @@ class TestNoise(unittest.TestCase):
 
         self.expected_T_std = sigma_T / pix2amin
         self.expected_P_std = sigma_P / pix2amin
+        self.test_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_nu0023p00GHz_noise_nside%04d.fits"%self.nside)
 
     def tearDown(self):
-        os.remove(self.test_file)
+        try:
+            os.remove(self.test_file)
+        except: # exception is different on different Python versions
+            pass
         
     def test_noise(self):
         instrument = pysm.Instrument(self.instrument_config)
         instrument.observe(self.sky)
-        self.test_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_nu0023p00GHz_noise_nside%04d.fits"%self.nside)
         T, Q, U = pysm.read_map(self.test_file, self.nside, field = (0, 1, 2))
         T_std = np.std(T)
         Q_std = np.std(Q)
