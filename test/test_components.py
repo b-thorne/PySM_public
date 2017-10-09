@@ -205,6 +205,13 @@ class test_models_partial_sky(unittest.TestCase):
         freefree_1_30GHz = read_map(os.path.join(test_data_dir, 'check4freef_30p0_64.fits'), 64, field = (0,))
         np.testing.assert_array_almost_equal(freefree_30_T, freefree_1_30GHz[pixel_indices], decimal = 3)
 
+    def test_partial_hensley_draine_2017(self):
+        pixel_indices = np.arange(10000, 11000, dtype=np.int)
+        f1_config = models("d5", 64, pixel_indices=pixel_indices)
+        dust = components.Dust(f1_config[0])
+        signal = dust.signal()
+        dust_30_T = signal(30.)[0]
+        assert len(dust_30_T) == 1000
 
 class test_CMB(unittest.TestCase):
         def setUp(self):
