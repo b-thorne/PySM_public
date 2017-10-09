@@ -7,6 +7,8 @@ from pysm.nominal import models, template
 import os
 from subprocess import call
 
+TEST_DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'test_data', 'benchmark'))
+
 class BandpassTests(unittest.TestCase):
     def setUp(self):
         self.frequencies = np.linspace(0, 1, 100000)
@@ -126,7 +128,51 @@ class TestNoise(unittest.TestCase):
         np.testing.assert_almost_equal(T_std, self.expected_T_std, decimal = 2)
         np.testing.assert_almost_equal(Q_std, self.expected_P_std, decimal = 2)
         np.testing.assert_almost_equal(U_std, self.expected_P_std, decimal = 2)
-        
+
+class TestSmoothing(unittest.TestCase):
+
+    def setUp(self):
+
+        nside = 64
+        self.sky_config = {
+            'synchrotron' : models("s1", nside)
+            }
+        self.synch_1_30GHz = pysm.read_map(os.path.join(TEST_DATA_DIR, 'check2synch_30p0_64.fits'), 64, field =(0,1,2))[np.newaxis, :, :]
+        self.synch_1_30GHz_smoothed = pysm.read_map(os.path.join(TEST_DATA_DIR, 'check2synch_30p0_64_smoothed1deg.fits'), 64, field =0)
+        self.instrument_config = {
+            'frequencies' : np.array([30., 30.]),
+            'beams' : np.array([60., 60.]),
+            'nside' : nside,
+            'add_noise' : False,
+            'output_units' : 'uK_RJ',
+            'use_smoothing' : True,
+            'use_bandpass' : False,
+        }
+
+
+    def test_no_smoothing(self):
+        instrument_config = self.instrument_config
+        instrument_config['use_smoothing'] = False
+        instrument = pysm.Instrument(instrument_config)
+        smoothed = instrument.smoother(self.synch_1_30GHz)
+        np.testing.assert_almost_equal(smoothed, self.synch_1_30GHz, decimal=6)
+
+    def test_smoothing(self):
+        instrument_config = self.instrument_config
+        instrument = pysm.Instrument(instrument_config)
+        smoothed = instrument.smoother(self.synch_1_30GHz)
+        np.testing.assert_almost_equal(smoothed[0][0], self.synch_1_30GHz_smoothed, decimal=3)
+
+    def test_smoothing_partial_sky(self):
+        """Smoothing on a partial sky sets the UNSEEN pixels to zero, so take a large fraction of the sky and check
+        only close to the galactic plane"""
+        pixel_indices = np.arange(10000, 30000, dtype=np.int)
+        instrument_config = self.instrument_config
+        instrument_config["pixel_indices"] = pixel_indices
+        instrument = pysm.Instrument(instrument_config)
+        smoothed = instrument.smoother(self.synch_1_30GHz[..., pixel_indices])
+        np.testing.assert_almost_equal(smoothed[0, 0, 10000:10100], self.synch_1_30GHz_smoothed[20000:20100], decimal=1)
+
 def main():
     unittest.main()
 
