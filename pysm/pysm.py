@@ -393,7 +393,8 @@ class Instrument(object):
             if self.pixel_indices is None:
                 return smoothed_map_array
             else:
-                assert smoothed_map_array.ndim == 2, "Assuming map array is 2 dimensional (n_maps x n_pixels)"
+                assert smoothed_map_array.ndim == 3, \
+                    "Assuming map array is 3 dimensional (n_freqs x n_maps x n_pixels)"
                 return smoothed_map_array[..., self.pixel_indices]
         else:
             print("Please set 'Use_Smoothing' in Instrument object.")
