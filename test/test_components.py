@@ -207,12 +207,11 @@ class test_models_partial_sky(unittest.TestCase):
 
 
 class test_CMB(unittest.TestCase):
-    def testCMB(self):
         def setUp(self):
             data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'pysm', 'template'))
             test_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'test_data', 'benchmark'))
         
-            cmb_config_1 = {
+            self.cmb_config_1 = {
                 'model' : 'taylens',
                 'cmb_specs' : np.loadtxt(os.path.join(data_dir, 'camb_lenspotentialCls.dat'), unpack = True),
                 'delens' : False,
@@ -221,14 +220,14 @@ class test_CMB(unittest.TestCase):
                 'cmb_seed' : 1234
             }
 
-            cmb = components.CMB(cmb_config_1)
+            cmb = components.CMB(self.cmb_config_1)
             signal = cmb.signal()
 
-            cmb_1_30GHz = read_map(os.path.join(test_data_dir, 'check5cmb_30p0_64.fits'), 64, field = (0, 1, 2))
+            self.cmb_1_30GHz = read_map(os.path.join(test_data_dir, 'check5cmb_30p0_64.fits'), 64, field = (0, 1, 2))
             cmb_1_100GHz = read_map(os.path.join(test_data_dir, 'check5cmb_100p0_64.fits'), 64, field = (0, 1, 2))
             cmb_1_353GHz = read_map(os.path.join(test_data_dir, 'check5cmb_353p0_64.fits'), 64, field = (0, 1, 2))
 
-            self.frac_diff_30GHz = (cmb_1_30GHz - signal(30.)) / cmb_1_30GHz
+            self.frac_diff_30GHz = (self.cmb_1_30GHz - signal(30.)) / self.cmb_1_30GHz
             self.frac_diff_100GHz = (cmb_1_100GHz - signal(100.)) / cmb_1_100GHz
             self.frac_diff_353GHz = (cmb_1_353GHz - signal(353.)) / cmb_1_353GHz
 
@@ -242,6 +241,16 @@ class test_CMB(unittest.TestCase):
             np.testing.assert_array_almost_equal(self.frac_diff_30GHz, np.zeros_like(self.frac_diff_30GHz), decimal = 6)
             np.testing.assert_array_almost_equal(self.frac_diff_100GHz, np.zeros_like(self.frac_diff_30GHz), decimal = 6)
             np.testing.assert_array_almost_equal(self.frac_diff_353GHz, np.zeros_like(self.frac_diff_30GHz), decimal = 6)
+
+        def test_CMB_partialsky(self):
+            cmb_config_partialsky = self.cmb_config_1.copy()
+            pixel_indices = np.arange(10000, 11000, dtype=np.int)
+            cmb_config_partialsky["pixel_indices"] = pixel_indices
+            cmb = components.CMB(cmb_config_partialsky)
+            signal = cmb.signal()
+            signal_30_T = signal(30.)[0]
+            assert len(signal_30_T) == len(pixel_indices)
+            np.testing.assert_array_almost_equal(signal_30_T, self.cmb_1_30GHz[0][pixel_indices], decimal=3)
 
 def main():
     unittest.main()
