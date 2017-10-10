@@ -43,7 +43,28 @@ def FloatOrArray(model):
                 sys.exit(1)
     return decorator
 
-def read_map(fname, nside, field = (0), verbose = False):
+def write_map(fname, output_map, nside=None, pixel_indices=None):
+    """Convenience function wrapping healpy's write_map and handling of partial sky
+
+    :param fname: path to fits file.
+    :type fname: str.
+    :param output_map: map or maps to be written to disk
+    :type fname: np.ndarray.
+    :param nside: nside of the pixel indices, necessary just if pixel_indices is defined
+    :type nside: int.
+    :param pixel_indices: pixels in RING ordering where the output map is defined
+    :type field: array of ints.
+    """
+
+    if pixel_indices is None:
+        full_map = output_map
+    else:
+        assert not nside is None, "nside is required if you provide pixel_indices"
+        full_map = build_full_map(pixel_indices, output_map, nside)
+
+    hp.write_map(fname, full_map, overwrite=True)
+
+def read_map(fname, nside, field = (0), pixel_indices=None, verbose = False):
     """Convenience function wrapping healpy's read_map and upgrade /
     downgrade in one function.
     
@@ -53,11 +74,20 @@ def read_map(fname, nside, field = (0), verbose = False):
     :type nside: int.  
     :param field: fields of fits file from which to read.  
     :type field: tuple of ints.  
+    :param pixel_indices: read only a subset of pixels in RING ordering
+    :type field: array of ints.
     :param verbose: run in verbose mode.  
     :type verbose: bool.
     :returns: numpy.ndarray -- the maps that have been read. 
     """
-    return hp.ud_grade(hp.read_map(fname, field = field, verbose = verbose), nside_out = nside)
+    output_map = hp.ud_grade(hp.read_map(fname, field = field, verbose = verbose), nside_out = nside)
+    if pixel_indices is None:
+        return output_map
+    else:
+        try: # multiple components
+            return [each[pixel_indices] for each in output_map]
+        except IndexError: # single component
+            return output_map[pixel_indices]
 
 def read_key(Class, keyword, dictionary):
     """Gives the input class an attribute with the name of the keyword and
@@ -371,3 +401,10 @@ def plot_maps(ins_conf, plot_odir):
     fig.savefig(opath, bbox_inches = 'tight', background = 'white')
 
     return fig
+
+def build_full_map(pixel_indices, pixel_values, nside):
+    output_shape = list(pixel_values.shape)
+    output_shape[-1] = hp.nside2npix(nside)
+    full_map = hp.UNSEEN * np.ones(output_shape, dtype=np.float64)
+    full_map[..., pixel_indices] = pixel_values
+    return full_map
