@@ -13,7 +13,7 @@ import healpy as hp
 import scipy.constants as constants
 import os, sys
 from .components import Dust, Synchrotron, Freefree, AME, CMB
-from .common import read_key, convert_units, bandpass_convert_units, check_lengths
+from .common import read_key, convert_units, bandpass_convert_units, check_lengths, write_map, build_full_map
 
 class Sky(object):
     """Model sky signal of Galactic foregrounds.
@@ -303,7 +303,14 @@ class Instrument(object):
         except AttributeError:
             print("Instrument attribute 'Output_Units not set.'")
             
-    def observe(self, Sky):
+    @property
+    def pixel_indices(self):
+        try:
+            return self.__pixel_indices
+        except AttributeError:
+            print("Instrument attribute 'pixel_indices' not set.")
+
+    def observe(self, Sky, write_outputs=True):
         """Evaluate and add instrument effects to Sky's signal function.
 
         This method evaluates the Sky class's signal method at the
@@ -322,7 +329,10 @@ class Instrument(object):
         output = self.smoother(output)
         noise = self.noiser()
         output, noise = self.unit_converter(output, noise)
-        self.writer(output, noise)
+        if write_outputs:
+            self.writer(output, noise)
+        else:
+            return output, noise
         return 
         
     def apply_bandpass(self, signal, Sky):
@@ -375,7 +385,17 @@ class Instrument(object):
         if not self.Use_Smoothing:
             return map_array
         elif self.Use_Smoothing:
-            return np.array([hp.smoothing(m, fwhm = np.pi / 180. * b / 60., verbose = False) for (m, b) in zip(map_array, self.Beams)])
+            if self.pixel_indices is None:
+                full_map = map_array
+            else:
+                full_map = build_full_map(self.pixel_indices, map_array, self.Nside)
+            smoothed_map_array = np.array([hp.smoothing(m, fwhm = np.pi / 180. * b / 60., verbose = False) for (m, b) in zip(full_map, self.Beams)])
+            if self.pixel_indices is None:
+                return smoothed_map_array
+            else:
+                assert smoothed_map_array.ndim == 3, \
+                    "Assuming map array is 3 dimensional (n_freqs x n_maps x n_pixels)"
+                return smoothed_map_array[..., self.pixel_indices]
         else:
             print("Please set 'Use_Smoothing' in Instrument object.")
             sys.exit(1)
@@ -391,12 +411,16 @@ class Instrument(object):
         :return: map plus noise, and noise -- numpy.ndarray
 
         """
-        npix = hp.nside2npix(self.Nside)
+        try:
+            npix = len(self.pixel_indices)
+        except TypeError:
+            npix = hp.nside2npix(self.Nside)
+
         if not self.Add_Noise:
             return np.zeros((len(self.Sens_I), 3, npix))
         elif self.Add_Noise:
             # solid angle per pixel in amin2
-            pix_amin2 = 4. * np.pi / float(npix) * (180. * 60. / np.pi) ** 2
+            pix_amin2 = 4. * np.pi / float(hp.nside2npix(self.Nside)) * (180. * 60. / np.pi) ** 2
             """sigma_pix_I/P is std of noise per pixel. It is an array of length
             equal to the number of input maps."""
             sigma_pix_I = np.sqrt(self.Sens_I ** 2 / pix_amin2)
@@ -462,19 +486,19 @@ class Instrument(object):
                 for f, o, n in zip(self.Frequencies, output, noise):
                     print(np.std(n, axis = 1))# * np.sqrt(4. * np.pi / float(hp.nside2npix(128)) * (180. * 60. / np.pi) ** 2)
                     print(np.std(o, axis = 1))
-                    hp.write_map(self.file_path(f = f, extra_info = "noise"), n)
-                    hp.write_map(self.file_path(f = f, extra_info = "total"), o + n)
+                    write_map(self.file_path(f = f, extra_info = "noise"), n, nside=self.Nside, pixel_indices=self.pixel_indices)
+                    write_map(self.file_path(f = f, extra_info = "total"), o + n, nside=self.Nside, pixel_indices=self.pixel_indices)
             elif not self.Add_Noise:
                 for f, o in zip(self.Frequencies, output):
-                    hp.write_map(self.file_path(f = f, extra_info = "total"), o)
+                    write_map(self.file_path(f = f, extra_info = "total"), o, nside=self.Nside, pixel_indices=self.pixel_indices)
         elif self.Use_Bandpass:
             if self.Add_Noise:
                 for c, o, n in zip(self.Channel_Names, output, noise):
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o + n)
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "noise"), n)
+                    write_map(self.file_path(channel_name = c, extra_info = "total"), o + n, nside=self.Nside, pixel_indices=self.pixel_indices)
+                    write_map(self.file_path(channel_name = c, extra_info = "noise"), n, nside=self.Nside, pixel_indices=self.pixel_indices)
             elif not self.Add_Noise:
                 for c, o in zip(self.Channel_Names, output):
-                    hp.write_map(self.file_path(channel_name = c, extra_info = "total"), o)
+                    write_map(self.file_path(channel_name = c, extra_info = "total"), o, nside=self.Nside, pixel_indices=self.pixel_indices)
         return
 
     def print_info(self):
@@ -582,7 +606,7 @@ def initialise_hd_dust_model_bandpass(hd_unint_signal, **kwargs):
 
     """
     #Draw map of uval using Commander dust data.
-    uval = Dust.draw_uval(kwargs['draw_uval_seed'], hp.npix2nside(len(kwargs['A_I'])))
+    uval = Dust.draw_uval(kwargs['draw_uval_seed'], kwargs['nside'], kwargs.get('pixel_indices'))
 
     #Read in the precomputed dust emission spectra as a function of lambda and U.
     data_sil, data_silfe, data_car, wav, uvec = Dust.read_hd_data()
