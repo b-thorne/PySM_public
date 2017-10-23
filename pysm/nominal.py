@@ -149,6 +149,12 @@ def d8(nside, pixel_indices=None):
         'add_decorrelation': False,
     }]
 
+def d9(nside, pixel_indices=None):
+    return [{
+        'interpolation': True,
+        'info_file': template('example_interpolation.txt'),
+    }]
+
 def s0(nside, pixel_indices=None):
     return [{
         'model': 'power_law',
