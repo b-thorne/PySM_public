@@ -260,10 +260,15 @@ def convert_units(unit1, unit2, nu):
 def K_CMB2Jysr(nu):
     """Kelvin_CMB to Janskies per steradian. Nu is in GHz.
 
-    :param nu: frequency in GHz at which to calculate unit conversion.
-    :type nu: float, numpy.ndarray
-    :return: unit conversion coefficient - float.
+    Parameters
+    ----------
+    nu: float
+        Frequency in GHz at which to calculate unit conversion.
 
+    Returns
+    -------
+    float
+        Unit conversion coefficient.
     """
     return dB(nu, 2.7255) * 1.e26
 
@@ -271,21 +276,32 @@ def K_CMB2Jysr(nu):
 def K_RJ2Jysr(nu):
     """Kelvin_RJ to Janskies per steradian. Nu is in GHz.
 
-    :param nu: frequency in GHz at which to calculate unit conversion.
-    :type nu: float, numpy.ndarray.
-    :return: unit conversion coefficient - float.
+    Parameters
+    ----------
+    nu: float
+        Frequency in GHz at which to calculate unit conversion.
 
+    Returns
+    -------
+    float
+        Unit conversion coefficient.
     """
     return  2. * (nu * 1.e9 / constants.c) ** 2 * constants.k * 1.e26
 
 def B(nu, T):
     """Planck function.
 
-    :param nu: frequency in GHz at which to evaluate planck function.
-    :type nu: float.
-    :param T: temperature of black body.
-    :type T: float.
-    :return: float -- black body brightness.
+    Parameters
+    ----------
+    nu: float
+        Frequency in GHz at which to evaluate planck function.
+    T: float
+        Temperature of black body.
+
+    Returns
+    -------
+    float
+        Black body brightness.
 
     """
     x = constants.h * nu * 1.e9 / constants.k / T
@@ -294,42 +310,47 @@ def B(nu, T):
 def dB(nu, T):
     """Differential planck function.
 
-    :param nu: frequency in GHz at which to evaluate differential planck function.
-    :type nu: float.
-    :param T: temperature of black body.
-    :type T: float.
-    :return: float -- differential black body function.
+    Parameters
+    ----------
+    nu: float
+        Frequency in GHz at which to evaluate differential planck function.
+    T: float
+        Temperature of black body.
+
+    Returns
+    -------
+    float
+        Differential black body function.
 
     """
     x = constants.h * nu * 1.e9 / constants.k / T
     return B(nu, T) / T * x * np.exp(x) / np.expm1(x)
 
 def bandpass_convert_units(unit, channel):
-    """Function to calculate the unit conversion factor after bandpass
+    r"""Function to calculate the unit conversion factor after bandpass
     integration from Jysr to either RJ, CMB or MJysr.
 
     Notes
     -----
     We integrate the signal in units of MJysr:
-    $$
-    [I_{\rm MJy/sr}] = \int I_{\rm MJy/sr}(\nu)  w(\nu)  d\nu
-    $$
+
+    .. math:: [I_{\rm MJy/sr}] = \int I_{\rm MJy/sr}(\nu)  w(\nu)  d\nu
+
     In order to convert to K_CMB we define A_CMB:
-    $$
-    [T_{\rm CMB}] = A_CMB [I_{\rm MJy/sr}]
-    $$
+
+    .. math:: [T_{\rm CMB}] = A_CMB [I_{\rm MJy/sr}]
+
     If we observe the CMB then:
-    $$
-    [T_{\rm CMB}] = A_{\rm CMB}  \int dB(\nu, 2.7255) * T_{\rm CMB} w(\nu) d\nu
-    $$
+
+    .. math:: [T_{\rm CMB}] = A_{\rm CMB}  \int dB(\nu, 2.7255) T_{\rm CMB} w(\nu) d\nu
+
     So:
-    $$
-    A_{\rm CMB} = 1 / \int dB(\nu, 2.7255) w(\nu) d\nu.
-    $$
+
+    .. math:: A_{\rm CMB} = 1 / \int dB(\nu, 2.7255) w(\nu) d\nu.
+
     In a similar way for Rayleigh-Jeans units:
-    $$
-    A_{\rm RJ} = 1 / \int 2  k \nu^2 / c^2 w(\nu) d\nu
-    $$
+
+    .. math:: A_{\rm RJ} = 1 / \int 2  k \nu^2 / c^2 w(\nu) d\nu
 
     Parameters
     ----------
@@ -414,9 +435,15 @@ def check_lengths(*args):
     """Function to check that all lengths of the input lists or arrays are equal.
     Returns True if lengths are equal, False if they are not.
 
-    :param args: arrays or lists to check the length of.
-    :type args: list, numpy.ndarray
-    :return: True if lengths are equal, else False -- bool
+    Parameters
+    ----------
+    args: sequence
+        Arrays or lists of which to check the length.
+
+    Returns
+    -------
+    bool
+        True if lengths are equal, else False.
 
     """
     return (len(set([len(x) for x in args])) <= 1)
@@ -425,62 +452,44 @@ def tophat_bandpass(nu_c, delta_nu, samples = 50):
     """Calculate a tophat bandpass for a given central frequency and width.
     This will return a tuple containing (frequencies, weights).
 
-    :param nu_c: central frequency of bandpass.
-    :type nu_c: float.
-    :param delta_nu: width of bandpass.
-    :type delta_nu: float.
-    :param samples: number samples in bandpass; the more samples the more accurate the result.
-    :type samples: int.
-    :return: tuple - (frequencies, weights)
+    Parameters
+    ----------
+    nu_c: float
+        Central frequency of bandpass.
+    delta_nu: float
+        Width of bandpass.
+    samples: int
+        Number samples in bandpass.
+
+    Returns
+    -------
+    tuple(array_like(float, ndim=1), array_like(float, ndim=1))
+        Band pass specifications as (frequencies, weights).
 
     """
     freqs = np.linspace(nu_c - delta_nu / 2., nu_c + delta_nu / 2., samples)
     weights = np.ones_like(freqs) / (freqs.size * delta_nu / samples)
-    print(np.sum(weights * delta_nu))
     return (freqs, weights)
 
-def plot_maps(ins_conf, plot_odir):
-    """Function to plot output maps for a given instrument configuration.
-
-    :param ins_conf: configuration file used to initialise the :class:`pysm.pysm.Instrument` used to generate the maps.
-    :type: dict
-    :param plot_odir: output directory to write maps to.
-    :type plot_odir: string
-    """
-    #get path to maps and define output plot path.
-    odir = os.path.abspath(plot_odir)
-    opath = os.path.join(odir, ins_conf.output_prefix+"_maps.pdf")
-
-    #get number of plots / 3
-    if ins_conf.Use_Bandpass:
-        N = len(ins_conf.Channel_Names)
-    else:
-        N = len(ins_conf.Frequencies)
-
-    #initialise figure
-    fig = plt.figure(1, figsize = (8, N*3))
-    def add_map(maps, i):
-        hp.mollview(maps[0], sub = (N, 3, i+1), fig = 1)
-        hp.mollview(maps[1], sub = (N, 3, i+1), fig = 1)
-        hp.mollview(maps[2], sub = (N, 3, i+1), fig = 1)
-        return
-
-    #do the plotting.
-    if not ins_conf.Use_Bandpass:
-        for i, f in enumerate(ins_conf.Frequencies):
-            m = hp.read_map(ins_conf.file_path(f = f, extra_info = "total"), field = (0, 1, 2))
-            add_map(m, i)
-
-    elif self.Use_Bandpass:
-        for i in enumerate(ins_conf.Channel_Names):
-            m = hp.read_map(ins_conf.file_path(channel_name = c, extra_info = "total"), field = (0, 1, 2))
-            add_map(m, i)
-
-    fig.savefig(opath, bbox_inches = 'tight', background = 'white')
-
-    return fig
 
 def build_full_map(pixel_indices, pixel_values, nside):
+    """Function to make a full map with correct number of pixels from a partial
+    sky map. This will pad with healpy.UNSEEN.
+
+    Parameters
+    ----------
+    pixel_indices: array_like(int)
+        Indices of the pixels we have information for.
+    pixel_values: array_like(float)
+        Values of the pixels at indices specified by `pixel_indices`.
+    nside:
+        Nside at which these pixels are specified, and nside of output map.
+
+    Returns
+    -------
+    array_like(float)
+        Full map. 
+    """
     output_shape = list(pixel_values.shape)
     output_shape[-1] = hp.nside2npix(nside)
     full_map = hp.UNSEEN * np.ones(output_shape, dtype=np.float64)
