@@ -13,7 +13,7 @@ import os, sys, time
 import scipy.constants as constants
 from scipy.interpolate import interp1d, RectBivariateSpline
 from scipy.misc import factorial, comb
-from .common import read_key, convert_units, FloatOrArray, invert_safe, B
+from .common import read_key, convert_units, FloatOrArray, invert_safe, B, interpolation
 from .nominal import template
 
 class Synchrotron(object):
@@ -41,11 +41,43 @@ class Synchrotron(object):
         return
 
     @property
+    def Nside(self):
+        try:
+            return self.__nside
+        except AttributeError:
+            print("Synchrotron attribute 'Nside' not set.")
+            sys.exit(1)
+
+    @property
     def Model(self):
         try:
             return self.__model
         except AttributeError:
             print("Synchrotron attribute 'Model' not set.")
+            sys.exit(1)
+
+    @property
+    def Interpolation(self):
+        try:
+            return self.__interpolation
+        except AttributeError:
+            # If not set take to be False.
+            return False
+
+    @property
+    def Interp_File(self):
+        try:
+            return self.__interp_file
+        except AttributeError:
+            print("Synchrotron attribute 'Interpolation' not set")
+            sys.exit(1)
+
+    @property
+    def pixel_indices(self):
+        try:
+            return self.__pixel_indices
+        except AttributeError:
+            print("Synchrotron attribute 'pixel_indices' not set")
             sys.exit(1)
 
     @property
@@ -118,7 +150,10 @@ class Synchrotron(object):
         :return: function -- selected model SED.
 
         """
-        return getattr(self, self.Model)()
+        if self.Interpolation:
+            return interpolation(self.Interp_File, self.Nside, self.pixel_indices)
+        else:
+            return getattr(self, self.Model)()
 
     def power_law(self):
         """Returns synchrotron (T, Q, U) maps as a function of observation

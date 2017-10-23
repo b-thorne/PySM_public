@@ -71,7 +71,7 @@ def interpolation(fpath, nside, pixel_indices=None):
         Function of frequency which itself returns a set of (T, Q, U) maps at
         that frequency.
     """
-    (nus, maps) = read_interp_data(fpaths, nside, pixel_indices=pixel_indices)
+    (nus, maps) = read_interp_data(fpath, nside, pixel_indices=pixel_indices)
     # Compute interpolation along the 0th axis (frequency axis). Extrapolate
     # extends the returned function beyond the min/max of the nus array.
     spline = CubicSpline(nus, maps, axis=0, extrapolate=True)
@@ -102,7 +102,7 @@ def read_interp_data(fpath, nside, pixel_indices=None):
                             dtype=[('nus', float), ('paths', object)])
     nus, fpaths = zip(*data)
     # Read in the maps pointed to by fpaths and return.
-    return (nus, np.array([read_map(fpath, nside, pixel_indices=pixel_indices) for fpath in fpaths]))
+    return (nus, np.array([read_map(fpath, nside, field=(0, 1, 2), pixel_indices=pixel_indices) for fpath in fpaths]))
 
 
 def write_map(fname, output_map, nside=None, pixel_indices=None):
@@ -143,7 +143,7 @@ def read_map(fname, nside, field = (0), pixel_indices=None, verbose = False):
     :type verbose: bool.
     :returns: numpy.ndarray -- the maps that have been read.
     """
-    output_map = hp.ud_grade(hp.read_map(fname, field = field, verbose = verbose), nside_out = nside)
+    output_map = hp.ud_grade(hp.read_map(fname, field=field, verbose=verbose), nside_out=nside)
     if pixel_indices is None:
         return output_map
     else:
@@ -305,36 +305,45 @@ def dB(nu, T):
     return B(nu, T) / T * x * np.exp(x) / np.expm1(x)
 
 def bandpass_convert_units(unit, channel):
-    """Function to calculate the unit conversion factor after bandpass integration from
-    Jysr to either RJ, CMB or MJysr.
+    """Function to calculate the unit conversion factor after bandpass
+    integration from Jysr to either RJ, CMB or MJysr.
 
+    Notes
+    -----
     We integrate the signal in units of MJysr:
-
-    [I_MJysr] = int I_Mjysr(nu) * weights * dnu
-
+    $$
+    [I_{\rm MJy/sr}] = \int I_{\rm MJy/sr}(\nu)  w(\nu)  d\nu
+    $$
     In order to convert to K_CMB we define A_CMB:
-
-    [T_CMB] = A_CMB [I_MJysr]
-
+    $$
+    [T_{\rm CMB}] = A_CMB [I_{\rm MJy/sr}]
+    $$
     If we observe the CMB then:
-
-    [T_CMB] = A_CMB * int dB(nu, 2.7255) * T_CMB * weights * dnu
-
-    So: A_CMB = 1. / int dB(nu, 2.7255) * weights * dnu.
-
+    $$
+    [T_{\rm CMB}] = A_{\rm CMB}  \int dB(\nu, 2.7255) * T_{\rm CMB} w(\nu) d\nu
+    $$
+    So:
+    $$
+    A_{\rm CMB} = 1 / \int dB(\nu, 2.7255) w(\nu) d\nu.
+    $$
     In a similar way for Rayleigh-Jeans units:
+    $$
+    A_{\rm RJ} = 1 / \int 2  k \nu^2 / c^2 w(\nu) d\nu
+    $$
 
-    A_RJ = 1. / int 2 * k * nu ** 2 / c ** 2 * weights * dnu
+    Parameters
+    ----------
+    unit1, unit2: str
+        Units from (`unit1`) and to (`unit2`) which to convert (K_RJ, K_CMB, Jysr) with SI prefix
+        (n, u, m, k, G).
+    channel: tuple(array_like(float, ndim=1), array_like(float, ndim=1))
+        tuple containing bandpass frequencies and weights:
+        (frequencies, weights).
 
-    :param unit1: unit from which to convert (K_RJ, K_CMB, Jysr) with SI prefix (n, u, m, k, G).
-    :type unit1: str.
-    :param unit2: unit to which to convert (K_RJ, K_CMB, Jysr) with SI prefix (n, u, m, k, G).
-    :type unit2: str.
-    :param channel: tuple containing bandpass frequencies and weights: (frequencies, weights).
-    :type channel: tuple.
-    :param nu_c: central frequency used to calculate unit conversions. If not set the mean frequency of the bandpass is used.
-    :type nu_c: float.
-    :return: unit conversion factor -- float
+    Returns
+    -------
+    float
+        Unit conversion factor.
 
     """
 
@@ -378,9 +387,15 @@ def bandpass_convert_units(unit, channel):
 def invert_safe(m):
     """Function to safely invert almost positive definite matrix.
 
-    :param m: matrix to invert.
-    :type m: numpy.ndarray.
-    :return: inverted matrix -- numpy.ndarray
+    Parameters
+    ----------
+    m: array_like(float, ndim=2)
+        Matrix to invert.
+
+    Returns
+    -------
+    array_like(float, ndim=2)
+        Inverted matrix.
 
     """
     mb = m.copy()
