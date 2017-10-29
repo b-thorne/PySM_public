@@ -13,6 +13,7 @@ import scipy.constants as constants
 from scipy.interpolate import CubicSpline
 import scipy.integrate
 import sys
+from numba improt jit
 
 def FloatOrArray(model):
     """Decorator to modify models to allow computation across an array of
@@ -299,6 +300,7 @@ def K_RJ2Jysr(nu):
     """
     return  2. * (nu * 1.e9 / constants.c) ** 2 * constants.k * 1.e26
 
+@jit(float64(float64, float64))
 def B(nu, T):
     """Planck function.
 
@@ -318,6 +320,7 @@ def B(nu, T):
     x = constants.h * nu * 1.e9 / constants.k / T
     return 2. * constants.h * (nu * 1.e9) ** 3 / constants.c ** 2 / np.expm1(x)
 
+@jit(float64(float64, float64))
 def dB(nu, T):
     """Differential planck function.
 
