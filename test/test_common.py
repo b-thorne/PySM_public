@@ -229,7 +229,9 @@ class test_interpolation(unittest.TestCase):
         dat = np.array(zip(self.nus, self.fpaths), dtype=[('nus', float), ('paths', object)])
         self.info_fpath = os.path.join(data_dir, 'test.txt')
         np.savetxt(self.info_fpath, dat, delimiter=" ", fmt="%.4f %s")
-        return
+        # Store spline for tests.
+        self.spline = common.interpolation(self.info_fpath, self.nside, pixel_indices=None)
+        return None
 
     def tearDown(self):
         try:
@@ -238,14 +240,20 @@ class test_interpolation(unittest.TestCase):
             os.remove(self.info_fpath)
         except: # exception is different on different Python versions
             pass
+        return None
 
-    def test_interpolation(self):
-        spline = common.interpolation(self.info_fpath, self.nside, pixel_indices=None)
-        spline_out = spline(self.nus)
+    def test_nodes(self):
+        spline_out = self.spline(self.nus)
         perc_diff = (spline_out - self.maps) / self.maps
         np.testing.assert_almost_equal(np.zeros_like(perc_diff), perc_diff, decimal=5)
         return None
 
+    def test_extraploation(self):
+        # Just check that querying frequencies outside of the original range
+        # does not give an error.
+        self.spline(0.9 * self.nus[0])
+        self.spline(1.1 * self.nus[-1])
+        return None
 
 def main():
     unittest.main()

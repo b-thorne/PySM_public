@@ -15,7 +15,7 @@ from scipy.interpolate import interp1d, RectBivariateSpline
 from scipy.misc import factorial, comb
 from .common import read_key, convert_units, FloatOrArray, invert_safe, B, interpolation
 from .nominal import template
-from numba import jit, float64
+
 
 class Synchrotron(object):
     """Class defining attributes and scaling laws of the synchrotron
@@ -233,10 +233,10 @@ class Synchrotron(object):
         return model
 
 class Dust(object):
-    """Class defining attributes and scaling laws of the dust
-    component, instantiated with a configuration dictionary containing
-    the required parameters of the synchrotron models. The key
-    item pairs are then assigned as attributes.
+    """Class defining attributes and scaling laws of the dust component,
+    instantiated with a configuration dictionary containing the required
+    parameters of the synchrotron models. The key item pairs are then assigned
+    as attributes.
 
     The current possible attributes are:
 
@@ -585,13 +585,14 @@ class Dust(object):
             if ('use_bandpass' in kwargs) and (kwargs['use_bandpass']):
                 return np.zeros((3, len(self.A_I)))
 
-            #Interpolation is done in wavelength and PySMvuses nu in GHz so we must convert from fequency
-            #in GHz to wavelength in microns for both the evaluation frequencies and reference frequencies.
+            # Interpolation is done in wavelength and PySMvuses nu in GHz so we
+            # must convert from fequenc in GHz to wavelength in microns for both
+            # the evaluation frequencies and reference frequencies.
             nu_to_lambda = lambda x: 1.e-3 * constants.c / x #Note this is in SI units.
 
-            #Define lambda functions for the evaluation of the intensity and polarisation models.
-            #Note that the HD model intepolates in units of Jysr, so we convert to uK_RJ to match the
-            #other scalings.
+            # Define lambda functions for the evaluation of the intensity and
+            # polarisation models. Note that the HD model intepolates in units
+            # of Jysr, so we convert to uK_RJ to match the other scalings.
             eval_HD17_I = lambda nu, nu_0: convert_units("Jysr", "uK_RJ", nu) / convert_units("Jysr", "uK_RJ", nu_0) *(
                 (1. - self.F_fe) * sil_i.ev(self.Uval, nu_to_lambda(nu))
                 + self.Fcar * car_i.ev(self.Uval, nu_to_lambda(nu))
@@ -714,8 +715,8 @@ class AME(object):
     @property
     def Nu_Peak(self):
         try:
-            return self.__nu_peak
         except AttributeError:
+            return self.__nu_peak
             print("AME attribute 'Nu_Peak' not set.")
             sys.exit(1)
 

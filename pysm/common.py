@@ -12,7 +12,6 @@ import numpy as np
 import scipy.constants as constants
 from scipy.interpolate import CubicSpline
 import scipy.integrate
-from numba import jit, float64
 import sys
 
 def FloatOrArray(model):
