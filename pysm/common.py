@@ -12,8 +12,8 @@ import numpy as np
 import scipy.constants as constants
 from scipy.interpolate import CubicSpline
 import scipy.integrate
+from numba import jit, float64
 import sys
-from numba improt jit
 
 def FloatOrArray(model):
     """Decorator to modify models to allow computation across an array of
@@ -38,15 +38,16 @@ def FloatOrArray(model):
             return model(nu_float, **kwargs)
         except TypeError:
             try:
-                """If not float, check if nu is one dimensional"""
+                # If not float, check if nu is one dimensional
                 nu_1darray = np.asarray(nu)
                 if not (nu_1darray.ndim == 1):
                     print("Frequencies must be float or convertable to 1d array.")
                     sys.exit(1)
-                    """If it is 1d array evaluate model function over all its elements."""
+                    # If it is 1d array evaluate model function over all its
+                    # elements.
                 return np.array([model(x, **kwargs) for x in nu_1darray])
             except ValueError:
-                """Fail if not convertable to 1d array"""
+                # Fail if not convertable to 1d array.
                 print("Frequencies must be either float or convertable to array.")
                 sys.exit(1)
     return decorator
@@ -99,7 +100,7 @@ def read_interp_data(fpath, nside, pixel_indices=None):
         containing the corresponding (T, Q, U) maps in the second.
     """
     # Read data using genfromtxt due to heterogeneous data types.
-    data = np.genfromtxt('test.txt', unpack=True, delimiter=" ",
+    data = np.genfromtxt(fpath, unpack=True, delimiter=" ",
                             dtype=[('nus', float), ('paths', object)])
     nus, fpaths = zip(*data)
     # Read in the maps pointed to by fpaths and return.
@@ -300,7 +301,7 @@ def K_RJ2Jysr(nu):
     """
     return  2. * (nu * 1.e9 / constants.c) ** 2 * constants.k * 1.e26
 
-@jit(float64(float64, float64))
+@jit(nopython=True, cache=True)
 def B(nu, T):
     """Planck function.
 
@@ -320,7 +321,7 @@ def B(nu, T):
     x = constants.h * nu * 1.e9 / constants.k / T
     return 2. * constants.h * (nu * 1.e9) ** 3 / constants.c ** 2 / np.expm1(x)
 
-@jit(float64(float64, float64))
+@jit(nopython=True, cache=True)
 def dB(nu, T):
     """Differential planck function.
 

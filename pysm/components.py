@@ -15,6 +15,7 @@ from scipy.interpolate import interp1d, RectBivariateSpline
 from scipy.misc import factorial, comb
 from .common import read_key, convert_units, FloatOrArray, invert_safe, B, interpolation
 from .nominal import template
+from numba import jit, float64
 
 class Synchrotron(object):
     """Class defining attributes and scaling laws of the synchrotron
@@ -24,15 +25,20 @@ class Synchrotron(object):
 
     The current possible attributes are:
 
-    - `Model` : SED used, power law or curved power law.
-    - `A_I` : intensity template used -- numpy.ndarray or float.
-    - `A_Q` : Q template used -- numpy.ndarray or float.
-    - `A_U` : U template used -- numpy.ndarray or float.
-    - `Nu_0_I` : reference frequency of I template -- float.
-    - `Nu_0_P` : reference frequency of Q and U template -- float.
-    - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray or float.
-    - `Spectral_Curvature` -- numpy.ndarray or float.
-    - `Nu_Curve` -- pivot frequency of curvature.
+    Attributes
+    ----------
+    Model: str
+        SED used, power law or curved power law.
+    A_I, A_Q, A_U: array_like(float, ndim=1)
+        intensity template used -- numpy.ndarray or float.
+    Nu_0_I, Nu_0_P: float
+        Reference frequency of I, P templates.
+    Spectral_Index: float or array_like(float)
+        Spectral index used in power law and curved power law.
+    Spectral_Curvature: float
+        Amplitude of curvature, if curvature requested.
+    Nu_Curve: float
+        Pivot frequency of curvature.
 
     """
     def __init__(self, config):
@@ -147,7 +153,10 @@ class Synchrotron(object):
     def signal(self):
         """Function to return the selected SED.
 
-        :return: function -- selected model SED.
+        Returns
+        -------
+        function
+            Selected model SED.
 
         """
         if self.Interpolation:
@@ -163,16 +172,25 @@ class Synchrotron(object):
         dependence.  The map of the spectral index may be a constant
         or spatially varing.
 
-        :return: power law model -- function
+        Returns
+        -------
+        function
+            Power law model.
 
         """
         @FloatOrArray
         def model(nu, **kwargs):
             """Power law scaling model.
 
-            :param nu: frequency at which to calculate the map.
-            :type nu: float.
-            :return: power law scaled maps, shape (3, Npix) -- numpy.ndarray shape
+            Parameters
+            ----------
+            nu: float
+                Frequency at which to calculate the map.
+
+            Returns
+            -------
+            array_like(float)
+                Power law scaled maps, shape (3, Npix).
 
             """
             scaling_I = power_law(nu, self.Nu_0_I, self.Spectral_Index)
@@ -435,6 +453,7 @@ class Dust(object):
             ----------
             nu: float
                 Frequency at which to evaluate model.
+
             Returns
             -------
             array_like(float)
@@ -448,9 +467,10 @@ class Dust(object):
 
     @staticmethod
     def draw_uval(seed, nside, pixel_indices=None):
-        #Use Planck MBB temperature data to draw realisations of the temperature and spectral
-        #index from normal distribution with mean equal to the maximum likelihood commander value,
-        # and standard deviation equal to the commander std.
+        #Use Planck MBB temperature data to draw realisations of the temperature
+        # and spectral index from normal distribution with mean equal to the
+        # maximum likelihood commander value, and standard deviation equal to
+        # the commander std.
         T_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 3, verbose = False)
         T_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 5, verbose = False)
         beta_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 6, verbose = False)
@@ -461,12 +481,13 @@ class Dust(object):
         T = T_mean + np.random.randn(len(T_mean)) * T_std
         beta = beta_mean + np.random.randn(len(beta_mean)) * beta_std
 
-        #use modified stefan boltzmann law to relate radiation field strength to temperature and
-        #spectral index. Since the interpolated data is only valid for -3 < uval <5 we clip
-        #the generated values (the generated values are no where near these limits, but it is good
-        #to note this for the future). We then udgrade the uval map to whatever nside is being
-        #considered.Since nside is not a parameter Sky knows about we have to get it from
-        #A_I, which is not ideal.
+        # use modified stefan boltzmann law to relate radiation field strength
+        # to temperature and spectral index. Since the interpolated data is only
+        # valid for -3 < uval <5 we clip the generated values (the generated
+        # values are no where near these limits, but it is good to note this for
+        # the future). We then udgrade the uval map to whatever nside is being
+        # considered.Since nside is not a parameter Sky knows about we have to
+        # get it from A_I, which is not ideal.
         uval_map = hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = nside)
         if not pixel_indices is None:
             uval_map = uval_map[pixel_indices]
@@ -474,31 +495,44 @@ class Dust(object):
 
     @staticmethod
     def read_hd_data():
-        # Read in precomputed dust emission properties in infrared as a function of U
-        # the radiation field strength for a given grain composition and grain size distribution.
-        #data_sil contains the emission properties for silicon grains with no iron inclusions.
+        # Read in precomputed dust emission properties in infrared as a function
+        # of U the radiation field strength for a given grain composition and
+        # grain size distribution. data_sil contains the emission properties for
+        # silicon grains with no iron inclusions.
         data_sil = np.genfromtxt(template("sil_fe00_2.0.dat"))
-        #data_silfe containts the emission properties for sillicon grains with 5% iron inclusions.
+        # data_silfe containts the emission properties for sillicon grains with
+        # 5% iron inclusions.
         data_silfe = np.genfromtxt(template("sil_fe05_2.0.dat"))
-        #data_car contains the emission properties of carbonaceous grains.
+        # data_car contains the emission properties of carbonaceous grains.
         data_car = np.genfromtxt(template("car_1.0.dat"))
-        #get the wavelength and the set of field strengths over which these values were calculated.
+        # get the wavelength and the set of field strengths over which these
+        # values were calculated.
         wav = data_sil[:, 0]
         uvec = np.arange(-3., 5.01, 0.1)
         return data_sil, data_silfe, data_car, wav, uvec
 
     def hensley_draine_2017(self, *args, **kwargs):
-        """Returns dust (T, Q, U) maps as a function of observing frequenvy in GHz, nu. Uses the Hensley and Draine 2017 model.
+        """Returns dust (T, Q, U) maps as a function of observing frequenvy in
+        GHz, nu. Uses the Hensley and Draine 2017 model.
 
-        This is based on a microphysical model of dust grains, taking into account the strength of the local radiation field, U,
-        the grain compositions (carbonaceous, and silicate with varying degrees of iron abundance) and solving for the
-        full temperature distribution with grain size.
+        This is based on a microphysical model of dust grains, taking into
+        account the strength of the local radiation field, U, the grain
+        compositions (carbonaceous, and silicate with varying degrees of iron
+        abundance) and solving for the full temperature distribution with grain
+        size.
 
-        *Model Parameters*
+        Notes
+        -----
+        Model parameters:
 
-        - log U (uval): Radiation field intensity parameter, sets grain temperatures. Must be between -3 and 5. U is the radiation field energy density relative to the MMP83 radiation field. So uval = -0.5 corresponds to a radiation field 10^-0.5 times as intense as the standard interstellar radiation field.
+        - log U (uval): Radiation field intensity parameter, sets grain
+            temperatures. Must be between -3 and 5. U is the radiation field
+            energy density relative to the MMP83 radiation field. So uval = -0.5
+            corresponds to a radiation field 10^-0.5 times as intense as the
+            standard interstellar radiation field.
         - fcar: Mass fraction of carbonaceous grains relative to silicate grains
-        - f_fe: Fraction of silicate grains with iron inclusions relative to silicate grains.
+        - f_fe: Fraction of silicate grains with iron inclusions relative to
+            silicate grains.
 
         Model is calibrated such that fcar = 1 and f_fe = 0 reproduce the Planck
         FIR dust SED. fcar = f_fe >> 1 will also do so but with different
@@ -506,7 +540,10 @@ class Dust(object):
         fcar =~ 1 + fsilfe is expected, meaning that: 1-f_fe + f_fe = f_car.
         So  in the current implementation f_car should stay ~1.
 
-        :return: function - model (T, Q, U) maps.
+        Returns
+        -------
+        function
+            Model (T, Q, U) maps.
 
         """
         data_sil, data_silfe, data_car, wav, uvec = self.read_hd_data()
@@ -572,15 +609,17 @@ class Dust(object):
                     + self.F_fe * silfe_p.ev(self.Uval, nu_to_lambda(nu_0))
                 )
 
-            """The interpolation above is only valid for nu > 10GHz. Therefore for frequencies below this
-            we implement a fudge and use the Rayleigh Jeans formula. The dust signal at this point should
-            be negligible in any case.
-            nu_break is the lowest frequency in the interpolation files given for the HD17 model.
-            """
+            # The interpolation above is only valid for nu > 10GHz. Therefore
+            # for frequencies below this, we implement a fudge and use the
+            # Rayleigh Jeans formula. The dust signal at this point should
+            # be negligible in any case. nu_break is the lowest frequency in
+            # the interpolation files given for the HD17 model.
+
             nu_break = 10.
             if (nu <= nu_break):
-                #calculate the RJ scaling factor for frequencies below nu_break. At these frequencies
-                #dust is largely irrelevant, and so we just use a constant spectral index of 1.54.
+                #calculate the RJ scaling factor for frequencies below nu_break.
+                # At these frequencies dust is largely irrelevant, and so we
+                # just use a constant spectral index of 1.54.
                 RJ_factor = (nu / nu_break) ** 1.54
 
                 #calculate the HD17  model at the break frequency.
@@ -606,23 +645,32 @@ class Dust(object):
         return model
 
 class AME(object):
-    """Class defining attributes and scaling laws of the synchrotron
-    component, instantiated with a configuration dictionary containing
-    the required parameters of the synchrotron models. The key
-    item pairs are then assigned as attributes.
+    """Class defining attributes and scaling laws of the synchrotron component,
+    instantiated with a configuration dictionary containing the required
+    parameters of the synchrotron models. The key-item pairs are then assigned
+    as attributes.
 
     The current possible attributes are:
 
-    - `Model` : SED used, power law or curved power law.
-    - `A_I` : intensity template used -- numpy.ndarray or float.
-    - `Nu_0_I` : reference frequency of I template -- float.
-    - `Nu_0_P` : reference frequency of Q and U template -- float.
-    - `Emissivity` : numerically computed emissivity used to scale AME. In the nominal models this is produced using the SpDust2 code (Ali-Haimoud 2008) -- numpy.ndarray
-    - `Nu_Peak_0` : parameter required by SpDust2 -- float
-    - `Nu_Peak` : parameter required by SpDust2 -- float, numpy.ndarray
-    - `Pol_Frac` : polarisation fraction used in polarised AME model.
-    - `Angle_Q` : Q template from which to calculate polarisation angle for AME.
-    - `Angle_U` : U template from which to calculate polarisation angle for AME.
+    Attributes
+    ----------
+    Model: str
+        SED used, power law or curved power law.
+    A_I: array_like(float, ndim=1)
+        Intensity template used -- numpy.ndarray or float.
+    Nu_0_I, Nu_0_P: float
+        Reference frequency of I template -- float.
+    Emissivity: array_like(float, ndim=1)
+        Numerically computed emissivity used to scale AME. In the nominal models
+        this is produced using the SpDust2 code (Ali-Haimoud 2008).
+    Nu_Peak_0: float
+        Parameter required by SpDust2.
+    Nu_Peak: float or array_like(float, ndim=1)
+        Parameter required by SpDust2.
+    Pol_Frac: float
+        Polarisation fraction used in polarised AME model.
+    Angle_Q, Angle_U: array_like(float, ndim=1)
+        Q, U templates from which to calculate polarisation angle for AME.
 
     """
 
@@ -712,13 +760,19 @@ class AME(object):
         return getattr(self, self.Model)()
 
     def spdust_scaling(self, nu):
-        """Returns AME SED at frequency in GHz, nu.
-        Implementation of the SpDust2 code of (Ali-Haimoud et al 2012), evaluated for a
-        Cold Neutral Medium.
+        """Returns AME SED at frequency in GHz, nu. Implementation of the
+        SpDust2 code of (Ali-Haimoud et al 2012), evaluated for a Cold Neutral
+        Medium.
 
-        :param nu: frequency at which to calculate SED.
-        :type nu: float.
-        :return: spdust SED - float.
+        Parameters
+        ----------
+        nu: float
+            Frequency at which to calculate SED.
+
+        Returns
+        -------
+        array_like(float, ndim=1)
+            SpDust2 SED.
 
         """
         J = interp1d(self.Emissivity[0], self.Emissivity[1], bounds_error = False, fill_value = 0)
@@ -730,16 +784,25 @@ class AME(object):
     def spdust(self):
         """Returns AME (T, Q, U) maps as a function of observing frequency, nu.
 
-        :return: function -- AME spdust2 scaling as a function of frequency.
+        Returns
+        -------
+        function
+            AME spdust2 scaling as a function of frequency.
         """
         @FloatOrArray
         def model(nu, **kwargs):
             """Spdust2 unpolarised model.
 
-            :param nu: frequency in GHz at which to calculate the AME maps using
-            spdust2.
-            :type nu: float.
-            :return: AME maps at frequency nu, shape (3, Npix) -- numpy.ndarray.
+            Parameters
+            ----------
+            nu: array_like(float)
+                Frequency in GHz at which to calculate the AME maps using
+                spdust2.
+
+            Returns
+            -------
+            array_like(float)
+                AME maps at frequency nu, shape (3, Npix).
 
             """
             return np.array([self.spdust_scaling(nu) * self.A_I, np.zeros_like(self.A_I), np.zeros_like(self.A_I)])
@@ -752,7 +815,10 @@ class AME(object):
         U_Angle tepmlates, and the given Pol_Frac.
         Scaling is the same as spdust(self).
 
-        :return: function -- polarised spdust2 model as a function of frequency.
+        Returns
+        -------
+        function
+            Polarised spdust2 model as a function of frequency.
         """
         @FloatOrArray
         def model(nu, **kwargs):
@@ -762,9 +828,16 @@ class AME(object):
             a different result to downgrading Q and U maps then
             calculating polarisation angle.
 
-            :param nu: frequency in GHz at which to evaluate the model.
-            :type nu: float.
-            :return: numpy.ndarray -- maps of polarised AME model, shape (3, Npix).
+            Parameters
+            ----------
+            nu: float
+                Frequency in GHz at which to evaluate the model.
+
+
+            Returns
+            -------
+            array_like(float)
+                Maps of polarised AME model, shape (3, Npix).
 
             """
             pol_angle = np.arctan2(self.Angle_U, self.Angle_Q)
@@ -774,17 +847,23 @@ class AME(object):
         return model
 
 class Freefree(object):
-    """Class defining attributes and scaling laws of the free-free
-    component, instantiated with a configuration dictionary containing
-    the required parameters of the free-free models. The key
-    item pairs are then assigned as attributes.
+    """Class defining attributes and scaling laws of the free-free component,
+    instantiated with a configuration dictionary containing the required
+    parameters of the free-free models. The key-item pairs are then assigned as
+    attributes.
 
     The current possible attributes are:
 
-    - `Model` : SED used, for free-free only power law is available.
-    - `A_I` : intensity template used -- numpy.ndarray or float.
-    - `Nu_0_I` : reference frequency of I template -- float.
-    - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray or float.
+    Attributes
+    ----------
+    Model: str
+        SED used, for free-free only power law is available.
+    A_I: array_like(float, ndim=1)
+        Intensity template.
+    Nu_0_I: float
+        Reference frequency of I template.
+    Spectral_Index: float or array_like(float)
+        Spectral index used in power law and curved power law.
 
     """
     def __init__(self, config):
@@ -839,16 +918,25 @@ class Freefree(object):
         dependence.  The map of the spectral index may be a constant
         or spatially varing.
 
-        :return: function -- power law model.
+        Returns
+        -------
+        function
+            Power law model.
 
         """
         @FloatOrArray
         def model(nu, **kwargs):
             """Power law scaling model.
 
-            :param nu: frequency at which to calculate the map.
-            :type nu: float.
-            :return: numpy.ndarray -- power law scaled maps, shape (3, Npix).
+            Parameters
+            ----------
+            nu: float
+                Frequency at which to calculate the map.
+
+            Returns
+            -------
+            array_like(float)
+                Power law scaled maps, shape (3, Npix).
 
             """
             scaling = power_law(nu, self.Nu_0_I, self.Spectral_Index)
@@ -857,22 +945,29 @@ class Freefree(object):
         return model
 
 class CMB(object):
-    """Class defining attributes and scaling laws of the synchrotron
-    component, instantiated with a configuration dictionary containing
-    the required parameters of the synchrotron models. The key
-    item pairs are then assigned as attributes.
+    """Class defining attributes and scaling laws of the synchrotron component,
+    instantiated with a configuration dictionary containing the required
+    parameters of the synchrotron models. The key-item pairs are then assigned
+    as attributes.
 
     The current possible attributes are:
 
-    - `Model` : SED law, e.g. taylens.
-    - `A_I` : intensity template used -- numpy.ndarray or float.
-    - `A_Q` : Q template used -- numpy.ndarray or float.
-    - `A_U` : U template used -- numpy.ndarray or float.
-    - `cmb_specs` : input unlensed cls in CAMB format -- numpy.ndarray
-    - `delensing_ells` : delensing fraction as a function of ell -- numpy.ndarray
-    - `nside` : nside at which to generate CMB.
-    - `cmb_seed` : random seed for CMB generation.
-    - `cmb_specs_lensed` : input lensed cls in CAMB format` -- numpy.ndarray
+    Attributes
+    ----------
+    Model: str
+        SED law, e.g. taylens.
+    A_I, A_Q, A_U: array_like(float, ndim=1)
+        Intensity and polarization templates used.
+    cmb_specs: array_like(float)
+        Input unlensed cls in CAMB format.
+    delensing_ells: array_like(float, ndim=1)
+        Delensing fraction as a function of multipole.
+    nside: int
+        Nside at which to generate CMB.
+    cmb_seed: int
+        RNG seed for CMB generation.
+    cmb_specs_lensed: array_like(float)
+        Input lensed cls in CAMB format.
 
     """
     def __init__(self, config):
@@ -967,7 +1062,10 @@ class CMB(object):
     def signal(self):
         """Function to return the selected SED.
 
-        :return: function -- selected model SED.
+        Returns
+        -------
+        function
+            Selected model SED.
 
         """
         return getattr(self, self.Model)()
@@ -977,7 +1075,10 @@ class CMB(object):
 
         This code is extracted from the taylens code (reference).
 
-        :return: function -- CMB maps.
+        Returns
+        -------
+        function
+            CMB maps.
         """
         synlmax = 8 * self.Nside #this used to be user-defined.
         data = self.CMB_Specs
@@ -1110,7 +1211,7 @@ def power_law(nu, nu_0, b):
     """
     return (nu / nu_0) ** b
 
-@jit(float64(float64, float64, float64))
+@jit(nopython=True, cache=True)
 def black_body(nu, nu_0, T):
     """Calculate scaling factor for black body SED.
 

@@ -4,6 +4,8 @@ from astropy.io import fits
 import scipy.constants as constants
 from pysm import common
 import os
+import healpy as hp
+
 
 class CommonTests(unittest.TestCase):
 
@@ -209,19 +211,22 @@ class test_interpolation(unittest.TestCase):
         n_maps = 20
         nu_min = 100
         nu_max = 400
+        nu_0 = 100
         self.nside = 64
+        npix = hp.nside2npix(self.nside)
+        index = 3. + 0.1 * np.random.randn(3 * npix).reshape((3, npix))
         # Make array of frequencies.
         self.nus = np.linspace(nu_min, nu_max, n_maps)
         # Make mock maps
-        self.power_law = lambda nu, nu_0, beta: (nu / nu_0) ** beta
+        power_law = lambda nu, nu_0, beta: (nu / nu_0) ** beta
         self.maps = power_law(self.nus.reshape(len(self.nus), 1, 1), nu_0, index)
         # Save data
         data_dir = os.path.abspath(os.path.dirname(__file__))
-        self.fpaths = [os.path.join(data_dir, 'map{:03d}.fits'.format(i)) for i in range(len(maps))]
-        for fpath, hpix_map in zip(self.fpaths, maps):
-            hp.write_map(fpath, hpix_map, overwrite=True)
+        self.fpaths = [os.path.join(data_dir, 'map{:03d}.fits'.format(i)) for i in range(len(self.maps))]
+        for fpath, hpix_map in zip(self.fpaths, self.maps):
+            hp.write_map(fpath, hpix_map)
         # Make an example info file that will be given to PySM with paths to the data.
-        dat = np.array(zip(nus, fpaths), dtype=[('nus', float), ('paths', object)])
+        dat = np.array(zip(self.nus, self.fpaths), dtype=[('nus', float), ('paths', object)])
         self.info_fpath = os.path.join(data_dir, 'test.txt')
         np.savetxt(self.info_fpath, dat, delimiter=" ", fmt="%.4f %s")
         return
@@ -229,15 +234,17 @@ class test_interpolation(unittest.TestCase):
     def tearDown(self):
         try:
             for path in self.fpaths:
-                os.remove(self.test_file)
+                os.remove(path)
             os.remove(self.info_fpath)
         except: # exception is different on different Python versions
             pass
 
     def test_interpolation(self):
         spline = common.interpolation(self.info_fpath, self.nside, pixel_indices=None)
-        np.assert_almost_equal(spline(self.nus), self.maps)
-
+        spline_out = spline(self.nus)
+        perc_diff = (spline_out - self.maps) / self.maps
+        np.testing.assert_almost_equal(np.zeros_like(perc_diff), perc_diff, decimal=5)
+        return None
 
 
 def main():
