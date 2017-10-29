@@ -1212,7 +1212,6 @@ def power_law(nu, nu_0, b):
     """
     return (nu / nu_0) ** b
 
-@jit(nopython=True, cache=True)
 def black_body(nu, nu_0, T):
     """Calculate scaling factor for black body SED.
 

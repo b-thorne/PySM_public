@@ -300,7 +300,6 @@ def K_RJ2Jysr(nu):
     """
     return  2. * (nu * 1.e9 / constants.c) ** 2 * constants.k * 1.e26
 
-@jit(nopython=True, cache=True)
 def B(nu, T):
     """Planck function.
 
@@ -320,7 +319,6 @@ def B(nu, T):
     x = constants.h * nu * 1.e9 / constants.k / T
     return 2. * constants.h * (nu * 1.e9) ** 3 / constants.c ** 2 / np.expm1(x)
 
-@jit(nopython=True, cache=True)
 def dB(nu, T):
     """Differential planck function.
 
