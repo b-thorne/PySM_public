@@ -131,17 +131,23 @@ def read_map(fname, nside, field = (0), pixel_indices=None, verbose = False):
     """Convenience function wrapping healpy's read_map and upgrade /
     downgrade in one function.
 
-    :param fname: path to fits file.
-    :type fname: str.
-    :param nside: nside to which we up or down grade.
-    :type nside: int.
-    :param field: fields of fits file from which to read.
-    :type field: tuple of ints.
-    :param pixel_indices: read only a subset of pixels in RING ordering
-    :type field: array of ints.
-    :param verbose: run in verbose mode.
-    :type verbose: bool.
-    :returns: numpy.ndarray -- the maps that have been read.
+    Parameters
+    ----------
+    fname: str
+        Path to fits file.
+    nside: int
+        Nside to which we up or down grade.
+    field: int, array_like(int, ndim=1)
+        Fields of fits file from which to read.
+    pixel_indices: array_like(int) (optional, default=None)
+        Read only a subset of pixels in RING ordering.
+    verbose: bool (optional, default=False)
+        Run in verbose mode.
+
+    Returns
+    -------
+    array_like(float)
+        The maps that have been read.
     """
     output_map = hp.ud_grade(hp.read_map(fname, field=field, verbose=verbose), nside_out=nside)
     if pixel_indices is None:
@@ -156,13 +162,14 @@ def read_key(Class, keyword, dictionary):
     """Gives the input class an attribute with the name of the keyword and
     value of the corresponding dictionary item.
 
-    :param Class: Class instance for which we are defining attributes.
-    :type Class: object.
-    :param keyword: keyword of the dictionary element to set to Class.__class__.__name__
-    :type keyworkd: str.
-    :param dictionary: dictionary from which we are taking the value corresponding to keyword.
-    :type dictionary: dict.
-    :returns: does not return, but modifies inputs.
+    Parameters
+    ----------
+    Class: object
+        Class instance for which we are defining attributes.
+    keyword: str
+        Keyword of the dictionary element to set to Class.__class__.__name__
+    dictionary: dict
+        Dictionary from which we are taking the value corresponding to keyword.
     """
     try:
         setattr(Class, '_%s__%s'%(Class.__class__.__name__, keyword), dictionary[keyword])
@@ -174,13 +181,17 @@ def convert_units(unit1, unit2, nu):
     """Function to do unit conversions between Rayleigh-Jeans units, CMB
     units, and flux units.
 
-    :param unit1: unit from which we are converting.
-    :type unit1: str.
-    :param unit2: unit to which we are converting.
-    :type unit2: str.
-    :param nu: frequency at which to calculate unit conversion.
-    :type nu: float, np.ndarray.
-    :returns: unit conversion coefficient - float, numpy.ndarray.
+    Parameters
+    ----------
+    unit1, unit2: str
+        Unit from (`unit1`) and to (`unit2`) which we are converting.
+    nu: float, array_like(float)
+        Frequency at which to calculate unit conversion.
+
+    Returns
+    -------
+    float, array_like(float)
+        Unit conversion coefficient.
     """
     if "K_CMB" in unit1:
         #first deal with the unit conversion
@@ -293,7 +304,7 @@ def B(nu, T):
 
     Parameters
     ----------
-    nu: float
+    nu: float or array_like(float)
         Frequency in GHz at which to evaluate planck function.
     T: float
         Temperature of black body.
@@ -312,7 +323,7 @@ def dB(nu, T):
 
     Parameters
     ----------
-    nu: float
+    nu: float, or array_like(float)
         Frequency in GHz at which to evaluate differential planck function.
     T: float
         Temperature of black body.
@@ -488,7 +499,7 @@ def build_full_map(pixel_indices, pixel_values, nside):
     Returns
     -------
     array_like(float)
-        Full map. 
+        Full map.
     """
     output_shape = list(pixel_values.shape)
     output_shape[-1] = hp.nside2npix(nside)

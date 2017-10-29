@@ -1,9 +1,9 @@
-"""                                                                                            
+"""
 .. module:: pysm
    :platform: Unix
    :synopsis: module containing primary use classes Sky and Instrument.
 
-.. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk> 
+.. moduleauthor: Ben Thorne <ben.thorne@physics.ox.ac.uk>
 """
 
 from __future__ import absolute_import, print_function
@@ -22,43 +22,50 @@ class Sky(object):
     foreground from thermal dust, synchrotron, AME, free-free, and CMB
     emissions.
 
-    Is it inistialised using a dictionary. The keys must be 'cmb', 
+    Is it inistialised using a dictionary. The keys must be 'cmb',
     'dust', 'synchrotron', 'freefree', 'ame', and the values must be
     dictionaries with the configuration of the named component, e.g.:
-    
-    cmb_config = { 
-    'model' : 'taylens', 
-    'cmb_specs' : np.loadtxt('pysm/template/camb_lenspotentialCls.dat', unpack = True), 
-    'delens' : False, 
-    'delensing_ells' : np.loadtxt('pysm/template/delens_ells.txt'), 
-    'nside' : nside,
-    'cmb_seed' : 1111 
-    }
 
-    dust_config = {
-    'model' : 'modified_black_body',
-    'nu_0_I' : 545.,
-    'nu_0_P' : 353.,
-    'A_I' : pysm.read_map('pysm/template/dust_t_new.fits', nside, field = 0),
-    'A_Q' : pysm.read_map('pysm/template/dust_q_new.fits', nside, field = 0),
-    'A_U' : pysm.read_map('pysm/template/dust_u_new.fits', nside, field = 0),
-    'spectral_index' : 1.5,
-    'temp' : pysm.read_map('pysm/template/dust_temp.fits', nside, field = 0)
-    }
+    Examples
+    --------
+    For example an instance consisting of CMB and dust would be made by:
 
-    sky_config = { 
-    'cmb' : cmb_config, 
-    'dust': dust_config, 
-    }
+    .. code-block:: python
+
+        cmb_config = []{
+        'model' : 'taylens',
+        'cmb_specs' : np.loadtxt('pysm/template/camb_lenspotentialCls.dat', unpack = True),
+        'delens' : False,
+        'delensing_ells' : np.loadtxt('pysm/template/delens_ells.txt'),
+        'nside' : nside,
+        'cmb_seed' : 1111
+        }]
+        dust_config = []{
+        'model' : 'modified_black_body',
+        'nu_0_I' : 545.,
+        'nu_0_P' : 353.,
+        'A_I' : pysm.read_map('pysm/template/dust_t_new.fits', nside, field = 0),
+        'A_Q' : pysm.read_map('pysm/template/dust_q_new.fits', nside, field = 0),
+        'A_U' : pysm.read_map('pysm/template/dust_u_new.fits', nside, field = 0),
+        'spectral_index' : 1.5,
+        'temp' : pysm.read_map('pysm/template/dust_temp.fits', nside, field = 0)
+        }]
+        sky_config = {
+        'cmb' : cmb_config,
+        'dust': dust_config,
+        }
 
     """
 
     def __init__(self, config):
         """Read the configuration dict for Sky
 
-        Implement the configuration file for the Sky instance. Then
-        define the getattributes corresponding to the requested
-        components.
+        Parameters
+        ----------
+        config: obj:`list`(obj:`dict`)
+
+        Implement the configuration file for the Sky instance. Then define the
+        getattributes corresponding to the requested components.
         """
         self.__config = config
         self.__components = list(config.keys())
@@ -82,7 +89,7 @@ class Sky(object):
             self.freefree = component_adder(Freefree, self.Config['freefree'])
         if 'ame' in self.Components:
             self.ame = component_adder(AME, self.Config['ame'])
-        return 
+        return
 
     @property
     def Uses_HD17(self):
@@ -91,7 +98,7 @@ class Sky(object):
     @Uses_HD17.setter
     def Uses_HD17(self, value):
         self.__uses_hd17 = value
-    
+
     @property
     def Config(self):
         try:
@@ -99,7 +106,7 @@ class Sky(object):
         except AttributeError:
             print("Sky attribute 'Config' not set.")
             sys.exit(1)
-            
+
     @property
     def Components(self):
         try:
@@ -111,8 +118,19 @@ class Sky(object):
     def signal(self, **kwargs):
         """Returns the sky as a function of frequency.
 
-        This returns a function which is the sum of all the requested 
-        sky components at the given frequency: (T, Q, U)(nu)."""
+        This returns a function which is the sum of all the requested
+        sky components at the given frequency: (T, Q, U)(nu).
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        function
+            Function that returns the sum of all the components of the sky
+            model at the requested frequenc.
+
+        """
         def signal(nu):
             sig = 0.
             for component in self.Components:
@@ -124,31 +142,68 @@ class Instrument(object):
     """This class contains the attributes and methods required to model
     the instrument observing Sky.
 
-    Instrument contains methods used to perform bandpass integration over an arbitrary bandpass, smooth with a Gaussian beam, and a white Gaussian noise component.
-    Instrument is initialised with dictionary, the possible keys are:
+    Instrument contains methods used to perform bandpass integration over an
+    arbitrary bandpass, smooth with a Gaussian beam, and a white Gaussian noise
+    component. Instrument is initialised with dictionary. The keys of this
+    dictionary correspond to the `Instrument` properties which are assigned
+    when this object is instantiated.
 
-    - `frequencies` : frequencies at which to evaluate the Sky model -- numpy.ndarray.
-    - `use_smoothing` : whether or not to use smoothing -- bool.
-    - `beams` :  Gaussian beam FWHMs in arcmin. Only used if use_smoothing is True. Must be the same length as frequencies.
-    - `add_noise` : whether or not to add noise -- bool
-    - `sens_I` : sensitivity of intensity in uK_RJamin. Only used if add_noise is True. Must be same length as frequencies -- numpy.ndarray
-    - `sens_P` : sensitivity of polarisation in uK_RJamin. Only used if add_noise is True. Must be same length as frequencies -- numpy.ndarray
-    - `nside` : nside at which to evaluate maps -- int.
-    - `noise_seed` : noise seed -- int.
-    - `use_bandpass` : whether or not to use bandpass. If this is True `frequencies` is not required -- bool
-    - `channels` : frequencies and weights of channels to be calculated as a list of tuples [(frequencies_1, weights_1), (frequencies_2, weights_2) ...] -- list of tuples
-    - `channel_names` : list of names used to label the files to which channel maps are written -- string.
-    - `output_directory` : directory to which the files will be written -- str.
-    - `output_prefix` : prefix for all output files -- str.
-    - `output_units` : output units -- str
-    
-    The use of Instrument is with the :class:`pysm.pysm.Sky` class. Given an instance of Sky we can use the :meth:`pysm.pysm.Instrument.obseve` to apply instrumental effects:
-    >>> sky = pysm.Sky(sky_config)
-    >>> instrument = pysm.Instrument(instrument_config)
-    >>> instrument.observe(sky)
+    Attributes
+    ----------
+    Frequencies:
+        array_like(float, ndim=1)
+        Frequencies at which to evaluate the sky model.
+    Use_Smoothing: bool
+        Whether or not to use smoothing.
+    Beams: array_like(float, ndim=1)
+        Gaussian beam FWHMs in arcmin. Only used if use_smoothing is True. Must
+        be the same length as frequencies.
+    Add_Noise: bool
+        Whether or not to add noise.
+    Sens_I, Sens_P: array_like(float, ndim=1)
+        Sensitivity of intensity / polarization in uK_RJamin. Only used if
+        `Instrument.Add_Noise` is True. Must be same length as frequencies.
+    Nside: int
+        Nside at which to evaluate maps.
+    Noise_Seed: int
+        RNG seed when generating noise realization.
+    Use_Bandpass: bool
+        Whether or not to use bandpass. If this is True `frequencies` is not
+        required.
+    Channels: list of tuple of array_like(float, ndim=1)
+        Frequencies and weights of channels to be calculated as a list of
+        tuples.
+    Channel_Names: list of str
+        Names used to label the files to which channel maps are written.
+    Output_Directory: str
+        Directory to which the files will be written.
+    Output_Prefix: str
+        Prefix for all output files.
+    Output_Units: str
+        Output units.
+
+    Examples
+    --------
+
+    The use of Instrument is only intended to be with the :class:`pysm.pysm.Sky`
+    class. Given an instance of Sky we can use the
+    :meth:`pysm.pysm.Instrument.obseve` to apply instrumental effects:
+
+    .. code-block:: python
+
+        sky = pysm.Sky(sky_config)
+        instrument = pysm.Instrument(instrument_config)
+        instrument.observe(sky)
+
     """
     def __init__(self, config):
-        """Specifies the attributes of the Instrument class."""
+        """Specifies the attributes of the Instrument class.
+
+        Parameters
+        ----------
+        config: dict
+            Dictionary containing the specifications for the desired insrument.
+        """
         for k in config.keys():
             read_key(self, k, config)
 
@@ -177,7 +232,7 @@ class Instrument(object):
         except AttributeError:
             print("Instrument attribute 'Frequencies' not set.")
             sys.exit(1)
-            
+
     @property
     def Channels(self):
         try:
@@ -189,7 +244,7 @@ class Instrument(object):
     @Channels.setter
     def Channels(self, value):
         self.__channels = value
-        
+
     @property
     def Beams(self):
         try:
@@ -213,7 +268,7 @@ class Instrument(object):
     @Sens_I.setter
     def Sens_I(self, value):
         self.__sens_I = value
-            
+
     @property
     def Sens_P(self):
         try:
@@ -265,7 +320,7 @@ class Instrument(object):
         except AttributeError:
             print("Instrument attribute 'Output_Directory' not set.")
             sys.exit(1)
-            
+
     @property
     def Channel_Names(self):
         try:
@@ -274,7 +329,7 @@ class Instrument(object):
             print("Instrument attribute 'Channel_Names' not set.")
             sys.exit(1)
 
-    @property 
+    @property
     def Write_Components(self):
         try:
             return self.__write_components
@@ -302,7 +357,7 @@ class Instrument(object):
             return self.__output_units
         except AttributeError:
             print("Instrument attribute 'Output_Units not set.'")
-            
+
     @property
     def pixel_indices(self):
         try:
@@ -318,14 +373,17 @@ class Instrument(object):
         smooths with a Gaussian beam, if requested. Then adds Gaussian
         white noise, if requested. Finally writes the maps to file.
 
-        :param Sky: instance of the :class:`pysm.pysm.Sky` class. 
+        Parameters
+        ----------
+        Sky: class:`pysm.pysm.Sky`
+            Instance of the :class:`pysm.pysm.Sky` class.
         :type Sky: class
         :return: no return, writes to file.
 
         """
         self.print_info()
         signal = Sky.signal()
-        output = self.apply_bandpass(signal, Sky) 
+        output = self.apply_bandpass(signal, Sky)
         output = self.smoother(output)
         noise = self.noiser()
         output, noise = self.unit_converter(output, noise)
@@ -333,8 +391,8 @@ class Instrument(object):
             self.writer(output, noise)
         else:
             return output, noise
-        return 
-        
+        return
+
     def apply_bandpass(self, signal, Sky):
         """Function to integrate signal over a bandpass.  Frequencies must be
         evenly spaced, if they are not the function will object. Weights
@@ -343,7 +401,7 @@ class Instrument(object):
         :param signal: signal function to be integrated of bandpass
         :type param: function
         :return: maps after bandpass integration shape either (N_freqs, 3, Npix) or (N_channels, 3, Npix) -- numpy.ndarray
-        
+
         """
         if not self.Use_Bandpass:
             return signal(self.Frequencies)
@@ -367,20 +425,20 @@ class Instrument(object):
             sys.exit(1)
 
     def normalise_bandpass(self):
-        """Function to normalise input bandpasses such that they integrate to one 
+        """Function to normalise input bandpasses such that they integrate to one
         over the stated frequency range.
 
         """
         self.Channels = [(freqs, weights / np.trapz(weights, freqs * 1.e9)) for (freqs, weights) in self.Channels]
-        return 
-            
+        return
+
     def smoother(self, map_array):
         """Function to smooth an array of N (T, Q, U) maps with N beams in
         units of arcmin.
 
         :param map_array:
         :type map_array:
-        
+
         """
         if not self.Use_Smoothing:
             return map_array
@@ -406,7 +464,7 @@ class Instrument(object):
         sensitivities are expected to be in uK_CMB amin for the rest of
         PySM.
 
-        :param map_array: array of maps to which we add noise. 
+        :param map_array: array of maps to which we add noise.
         :type map_array: numpy.ndarray.
         :return: map plus noise, and noise -- numpy.ndarray
 
@@ -436,7 +494,7 @@ class Instrument(object):
             sys.exit(1)
 
     def unit_converter(self, map_array, noise):
-        """Function to handle the conversion of units. 
+        """Function to handle the conversion of units.
 
         If using delta bandpasses just evaluate the unit conversion
         factor normally. If using a bandpass we calculate the
@@ -454,7 +512,7 @@ class Instrument(object):
             Uc_signal = np.array(convert_units("uK_RJ", self.Output_Units, self.Frequencies))
         elif self.Use_Bandpass:
             # In the case of a given bandpass we calculate the unit conversion as explained in the documentation
-            # of bandpass_convert_units. 
+            # of bandpass_convert_units.
             Uc_signal = np.array([bandpass_convert_units(self.Output_Units, channel) for channel in self.Channels])
         if self.Add_Noise:
             # If noise requested also multiple the calculated noise.
@@ -466,7 +524,7 @@ class Instrument(object):
         elif not self.Add_Noise:
             Uc_noise = np.zeros_like(Uc_signal)
         return Uc_signal[:, None, None] * map_array, Uc_noise[:, None, None] * noise
-            
+
     def file_path(self, channel_name = None, f = None, extra_info = ""):
         """Returns file path for pysm outputs.
         """
@@ -518,9 +576,9 @@ class Instrument(object):
         elif self.Use_Bandpass:
             print("Channel name | sigma_I (uK_CMB amin) | sigma_P (uK_CMB amin) | FWHM (arcmin) |")
             for cn, s_I, s_P, b in zip(self.Channel_Names, self.Sens_I, self.Sens_P, self.Beams):
-                print("%s | %05.2f | %05.2f | %05.2f "%(cn, s_I, s_P, b)) 
+                print("%s | %05.2f | %05.2f | %05.2f "%(cn, s_I, s_P, b))
         return
-    
+
 def bandpass(frequencies, weights, signal):
     """Function to integrate signal over a bandpass.
 
@@ -567,7 +625,7 @@ def check_bpass_frequencies(frequencies):
             np.testing.assert_almost_equal(spacing / frequency_range, frequency_separation / frequency_range, decimal = 3)
         except AssertionError:
             print("Bandpass frequencies not evenly spaced.")
-            sys.exit(1) 
+            sys.exit(1)
     return
 
 def component_adder(component_class, dictionary_list, **kwargs):
@@ -587,12 +645,12 @@ def component_adder(component_class, dictionary_list, **kwargs):
     def total_signal(nu, **kwargs):
         total_component_signal = 0
         # now sum up the contributions of each population at
-        # frequency nu. 
+        # frequency nu.
         for population_signal in population_signals:
             total_component_signal += population_signal(nu, **kwargs)
         return total_component_signal
     # return the total contribution from all populations
-    # as a function of frequency nu. 
+    # as a function of frequency nu.
     return total_signal
 
 def initialise_hd_dust_model_bandpass(hd_unint_signal, **kwargs):
@@ -601,7 +659,7 @@ def initialise_hd_dust_model_bandpass(hd_unint_signal, **kwargs):
     The keyword arguments are expected to be the initialisation
     dictionary for the HD dust component.
 
-    :param hd_unint_signal: signal of the un-integrated HD17 model. 
+    :param hd_unint_signal: signal of the un-integrated HD17 model.
     :type hd_unint_signal: function
 
     """
@@ -620,24 +678,24 @@ def initialise_hd_dust_model_bandpass(hd_unint_signal, **kwargs):
     sil_i = interpolate.RectBivariateSpline(uvec,wav,(data_sil[:,3:84]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
     car_i = interpolate.RectBivariateSpline(uvec,wav,(data_car[:,3:84]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
     silfe_i = interpolate.RectBivariateSpline(uvec,wav,(data_silfe[:,3:84]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
-    
+
     sil_p = interpolate.RectBivariateSpline(uvec,wav,(data_sil[:,84:165]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
     car_p = interpolate.RectBivariateSpline(uvec,wav,(data_car[:,84:165]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
     silfe_p = interpolate.RectBivariateSpline(uvec,wav,(data_silfe[:,84:165]*(wav[:,np.newaxis]*1.e-4/c)*1.e23).T) # to Jy/sr/H
 
     nu_to_lambda = lambda x: 1.e-3 * constants.c / x #Note this is in SI units.
     non_int_model_i = lambda nu: (1. - f_fe) * sil_i.ev(uval, nu_to_lambda(nu)) + fcar * car_i.ev(uval, nu_to_lambda(nu)) + f_fe * silfe_i.ev(uval, nu_to_lambda(nu))
-    non_int_model_p = lambda nu: (1. - f_fe) * sil_p.ev(uval, nu_to_lambda(nu)) + fcar * car_p.ev(uval, nu_to_lambda(nu)) + f_fe * silfe_p.ev(uval, nu_to_lambda(nu)) 
-        
+    non_int_model_p = lambda nu: (1. - f_fe) * sil_p.ev(uval, nu_to_lambda(nu)) + fcar * car_p.ev(uval, nu_to_lambda(nu)) + f_fe * silfe_p.ev(uval, nu_to_lambda(nu))
+
     A_I = kwargs['A_I'] * convert_units("uK_RJ", "Jysr", kwargs['nu_0_I']) / non_int_model_i(kwargs['nu_0_I'])
     A_Q = kwargs['A_Q'] * convert_units("uK_RJ", "Jysr", kwargs['nu_0_P']) / non_int_model_p(kwargs['nu_0_P'])
     A_U = kwargs['A_U'] * convert_units("uK_RJ", "Jysr", kwargs['nu_0_P']) / non_int_model_p(kwargs['nu_0_P'])
-    
+
     def bpass_model(channel):
         """Note that nu is in GHz, and so we have to multipl by 1.e9 in the following functions.
         """
         (nu, t_nu) = channel
-                
+
         # Integrate table over bandpass.
         sil_i_vec = np.zeros(len(uvec))
         car_i_vec = np.zeros(len(uvec))
@@ -654,7 +712,7 @@ def initialise_hd_dust_model_bandpass(hd_unint_signal, **kwargs):
             sil_i_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_sil[::-1,3+i]*1.e23)/nu*1.e-9, nu*1.e9)
             car_i_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_car[::-1,3+i]*1.e23)/nu*1.e-9, nu*1.e9)
             silfe_i_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_silfe[::-1,3+i]*1.e23)/nu*1.e-9, nu*1.e9)
-        
+
             sil_p_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_sil[::-1,84+i]*1.e23)/nu*1.e-9, nu*1.e9)
             car_p_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_car[::-1,84+i]*1.e23)/nu*1.e-9, nu*1.e9)
             silfe_p_vec[i] = np.trapz(t_nu*np.interp(nu*1.e9,c/(wav[::-1]*1.e-4),data_silfe[::-1,84+i]*1.e23)/nu*1.e-9, nu*1.e9)
@@ -663,7 +721,7 @@ def initialise_hd_dust_model_bandpass(hd_unint_signal, **kwargs):
         sil_i = interpolate.interp1d(uvec, sil_i_vec)
         car_i = interpolate.interp1d(uvec, car_i_vec)
         silfe_i = interpolate.interp1d(uvec, silfe_i_vec)
-        
+
         sil_p = interpolate.interp1d(uvec, sil_p_vec)
         car_p = interpolate.interp1d(uvec, car_p_vec)
         silfe_p = interpolate.interp1d(uvec, silfe_p_vec)

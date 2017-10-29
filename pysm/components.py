@@ -187,15 +187,26 @@ class Synchrotron(object):
         This model allows for curvature of the power law SED. The
         spectral curvature be a constant, or a map.
 
-        :return: power law model -- function
+        Returns
+        -------
+        function
+            Power law function. Argument is frequency, returns temperature and
+            polarization maps at that freuqency.
 
         """
         @FloatOrArray
         def model(nu, **kwargs):
             """Power law scaling model.
-            :param nu: frequency at which to calculate the map.
-            :type nu: float.
-            :return: power law scaled maps, shape (3, Npix) -- numpy.ndarray shape
+
+            Parameters
+            ----------
+            nu: float, array_like(float, ndim=1)
+                Frequency at which to calculate the map.
+
+            Returns
+            -------
+            array_like(float)
+                Power law scaled maps, shape (3, Npix).
             """
             curvature_term = np.log(power_law(nu, self.Nu_Curve, self.Spectral_Curvature))
             scaling_I = power_law(nu, self.Nu_0_I, self.Spectral_Index + curvature_term)
@@ -211,22 +222,37 @@ class Dust(object):
 
     The current possible attributes are:
 
-    - `Model` : SED used, modified black body, Hensley and Draine 2017.
-    - `A_I` : intensity template used -- numpy.ndarray, float.
-    - `A_Q` : Q template used -- numpy.ndarray, float.
-    - `A_U` : U template used -- numpy.ndarray, float.
-    - `Nu_0_I` : reference frequency of I template -- float.
-    - `Nu_0_P` : reference frequency of Q and U template -- float.
-    - `Spectral_Index` : spectral index used in power law and curved power law -- numpy.ndarray, float.
-    - `Temp` : temperature template used in the modified black body scaling -- numpy.ndarray, float.
-    - `Draw_Uval` : boolean, whether or not to draw a random realisation of Uval using Planck temperature and dust data.
-    - `Draw_Uval_Seed` : seed for random realisations of the dust temperature and spectral index used to compute Uval if Draw_Uval = True.
-    - `Uval` : logarithm of the radiation field strength. Required by Henlsey Draine 2017 if draw_Uval=False.
-    - `F_fe` : mass fraction of silicon grains with iron inclusions relative to total silicon grains.
-    - `Fcar` : mass fraction of carbonaceous grains relative to silicate grains. Required by Hensley and Draine model.
-    - `Add_Decorrelation` : add stochastic frequency decorrelation to the SED -- bool.
-    - `Corr_Len` : correlation length to use in decorrelation model -- float.
-
+    Attributes
+    ----------
+    Model: str
+        SED used, modified black body, Hensley and Draine 2017.
+    A_I, A_Q, A_U: array_like(float, ndim=1)
+        Tempearture, Q, and U templates used.
+    Nu_0_I, Nu_0_P: float
+        Reference frequencies of I and P templates.
+    Spectral_Index: float or array_like(float)
+        Spectral index used in power law and curved power law.
+    Temp: float or array_like(float)
+        Temperature template used in the modified black body scaling.
+    Draw_Uval: bool
+        Whether or not to draw a random realisation of Uval using Planck
+        temperature and dust data.
+    Draw_Uval_Seed: int
+        Seed for random realisations of the dust temperature and spectral index
+        used to compute Uval if `Draw_Uval=True`.
+    Uval: float or array_like(float)
+        Logarithm of the radiation field strength. Required by Henlsey Draine
+        2017 if `Draw_Uval=False`.
+    F_fe: float
+        Mass fraction of silicon grains with iron inclusions relative to total
+        silicon grains.
+    Fcar: float
+        Mass fraction of carbonaceous grains relative to silicate grains.
+        Required by Hensley and Draine model.
+    Add_Decorrelation: bool
+        Add stochastic frequency decorrelation to the SED.
+    Corr_Len: float
+        Correlation length to use in decorrelation model.
     """
     def __init__(self, config):
         for k in config.keys():
@@ -375,7 +401,10 @@ class Dust(object):
     def signal(self):
         """Function to return the selected SED.
 
-        :return: function -- selected scaling model.
+        Returns
+        -------
+        function
+            Selected scaling model.
         """
         return getattr(self, self.Model)()
 
@@ -384,11 +413,17 @@ class Dust(object):
         This is the simplest model, assuming a modified black body SED
         which is the same in temperature and polarisation.
         Note that the spectral index map is expected to be the index
-        beta_d such that:
-        I_nu = (nu/nu_0)^beta_d B(nu, T)/B(nu_0, T),
-        in flux units. Therefore beta_d ~ 1.54.
+        beta_d such that, in flux units:
 
-        :return: function -- model (T, Q, U) maps.
+        .. math::
+            f_nu = (nu/nu_0)^beta_d B(nu, T)/B(nu_0, T),
+
+        Therefore, beta_d ~ 1.54.
+
+        Returns
+        -------
+        function
+            Model (T, Q, U) maps.
 
         """
         @Add_Decorrelation(self)
@@ -396,9 +431,14 @@ class Dust(object):
         def model(nu, **kwargs):
             """Black body model
 
-            :param nu: frequency at which to evaluate model.
-            :type nu: float.
-            :return: modified black body scaling of maps, shape (3, Npix).
+            Parameters
+            ----------
+            nu: float
+                Frequency at which to evaluate model.
+            Returns
+            -------
+            array_like(float)
+                Modified black body scaling of maps, shape (3, Npix).
 
             """
             scaling_I = power_law(nu, self.Nu_0_I, self.Spectral_Index - 2) * black_body(nu, self.Nu_0_I, self.Temp)
@@ -493,9 +533,15 @@ class Dust(object):
         def model(nu, **kwargs):
             """Model of Hensley and Draine 2017.
 
-            :param nu: frequency in GHz at which to evaluate the model.
-            :type nu: float.
-            :return: maps produced using Hensley and Draine 2017 SED.
+            Parameters
+            ----------
+            nu: float
+                Frequency in GHz at which to evaluate the model.
+
+            Returns
+            -------
+            array_like(float)
+                Maps produced using Hensley and Draine 2017 SED.
 
             """
 
@@ -1047,12 +1093,19 @@ def power_law(nu, nu_0, b):
     Returns a power law scaling by index b for a map at reference
     frequency nu_0 t0 be scale to frequency nu.
 
-    :param nu: frequency being scaled to.
-    :type nu: float.
-    :param nu_0: reference frequency of power law.
-    :type nu_0: float.
-    :param b: spectral index by which to scale.
-    :type b: float.
+    Parameters
+    ----------
+    nu: float or array_like(float)
+        Frequency being scaled to.
+    nu_0: float
+        Reference frequency of power law.
+    b: float
+        Spectral index by which to scale.
+
+    Returns
+    -------
+    float or array_like(float)
+        Power law scaling from frequency `nu_0` to `nu` with index `b`.
 
     """
     return (nu / nu_0) ** b
@@ -1060,16 +1113,22 @@ def power_law(nu, nu_0, b):
 def black_body(nu, nu_0, T):
     """Calculate scaling factor for black body SED.
 
-    Factor to scale a black body emitter of temperature T template
-    from frequency nu_0 to frequency nu.
+    Factor to scale a black body emitter of temperature `T` template
+    from frequency `nu_0` to frequency `nu`.
 
-    :param nu: frequency being scaled to.
-    :type nu: float.
-    :param nu_0: reference frequency of power law.
-    :type nu_0: float.
-    :param T: temperature of black body function used to scale.
-    :type T: float.
-    :return: float -- black body at temperature T scaling from frequency nu_0 to nu.
+    Parameters
+    ----------
+    nu: float or array_like(float)
+        Frequency being scaled to.
+    nu_0: float
+        Reference frequency (scaled from).
+    T: float
+        Temperature of black body function.
+
+    Returns
+    -------
+    float or array_like(float)
+        Black body at temperature `T` scaling from frequency `nu_0` to `nu`.
 
     """
     return B(nu, T) / B(nu_0, T)
@@ -1077,12 +1136,19 @@ def black_body(nu, nu_0, T):
 def get_decorrelation_matrices(freqs,freq_ref,corrlen) :
     """Function to compute the mean and covariance for the decorrelation
 
-    :param freqs: frequencies at which to calculate covariance structure.
-    :type freqs: numpy.array.
-    :param freq_ref: reference frequency for constrained map.
-    :type freq_ref: float.
-    :corrlen: correlation length of imposed Gaussian decorrelation.
-    :return: numpy.ndarray(len(freqs), len(freqs)), nump.ndarray(len(freqs)) -- the output covariance and mean.
+    Parameters
+    ----------
+    freqs: array_like(float)
+        Frequencies at which to calculate covariance structure.
+    freq_ref: float
+        Reference frequency for constrained map.
+    corrlen: float
+        Correlation length of imposed Gaussian decorrelation.
+
+    Returns
+    -------
+    array_like(float, ndim=2)
+        The output covariance and mean.
 
     """
     if corrlen <= 0:
@@ -1118,23 +1184,38 @@ def get_decorrelation_matrices(freqs,freq_ref,corrlen) :
             rho_mean_new[:indref, :] = rho_mean[:indref, :]
             rho_mean_new[indref + 1:, :] = rho_mean[indref:, :]
             rho_mean = rho_mean_new
-
     return rho_covar, rho_mean
 
 def Add_Decorrelation(Component):
     """Function to calculate a wrapper for some model(nu) function to add
     decorrelation.
 
-    :param Component: instance of one of the classes in :mod:`pysm.component`
-    :type Component: class
-    :return: function - decorator used to add stochastic decorrelation to an emission model.
+    Parameters
+    ----------
+    Component: object
+        Instance of one of the classes in  :mod:`pysm.component`.
 
-    Required parameters:
+    Returns
+    -------
+    function
+        Decorator used to add stochastic decorrelation to an emission model.
 
-    - Component.Add_Decorrelation: bool - True = add decorrelation. Flase = do not.
-    - Component.Corr_Len: float - correlation length defined in accompanying paper.
+    Notes
+    -----
 
-    Example use:
+    Required attributes of the input object:
+
+    - `Component.Add_Decorrelation`: bool
+        If True, add decorrelation, otherwise do not.
+    - `Component.Corr_Len`: float
+        correlation length.
+
+    Mathematically, the model we implement can be described by:
+
+    Examples
+    --------
+    Add the option of decorrelation to a model by adding this decorrator:
+
     .. code-block::
 
        class Synchrotron(object):
@@ -1150,6 +1231,20 @@ def Add_Decorrelation(Component):
         def decorrelation(model):
             """This is the actual decorrelation decorator that will be implemented
             once the add_decorrelation function is evaluated.
+
+            Parameters
+            ----------
+            model: function
+                The function to which we are adding the decorrelation. This
+                may be any of the model functions which has frequency as the
+                only positional argument, and returns (T, Q, U) maps at
+                frequency `nu`.
+
+            Returns
+            -------
+            function
+                Wrapper of component model functions implementing frequency
+                decorrelation .
 
             """
             def wrapper(nu, **kwargs):
@@ -1234,8 +1329,8 @@ def taylor_interpol_iter(m, pos, order=3, verbose=False, lmax=None):
     yield res
     for o in range(1, order + 1):
             # Compute our derivatives
-            derivs2 = [None for i in range(o+1)]
-            used    = [False for i in range(o+1)]
+            derivs2 = [None for i in range(o + 1)]
+            used    = [False for i in range(o + 1)]
             # Loop through previous level in steps of two (except last)
             if verbose: tprint("order %d" % o)
             for i in range(o):
@@ -1243,9 +1338,9 @@ def taylor_interpol_iter(m, pos, order=3, verbose=False, lmax=None):
                     # doing double work.
                     if i < o-1 and i % 2 == 1:
                             continue
-                    a = hp.map2alm(derivs[i], use_weights = True, lmax = lmax, iter = 0)
+                    a = hp.map2alm(derivs[i], use_weights=True, lmax=lmax, iter=0)
                     derivs[i] = None
-                    dtheta, dphi = hp.alm2map_der1(a, nside, lmax = lmax)[-2:]
+                    dtheta, dphi = hp.alm2map_der1(a, nside, lmax=lmax)[-2:]
                     derivs2[i : i + 2] = [dtheta, dphi]
                     del a, dtheta, dphi
                     # Use these to compute the next level
