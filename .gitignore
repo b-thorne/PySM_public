@@ -4,8 +4,8 @@ debug
 __pycache__/
 *.py[cod]
 *$py.class
-./profile_test.py
-*.profile
+/profile_test.py
+/*.profile
 
 # fits files
 *.fits
