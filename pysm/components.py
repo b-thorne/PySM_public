@@ -16,7 +16,6 @@ from scipy.misc import factorial, comb
 from .common import read_key, convert_units, FloatOrArray, invert_safe, B, interpolation
 from .nominal import template
 
-
 class Synchrotron(object):
     """Class defining attributes and scaling laws of the synchrotron
     component, instantiated with a configuration dictionary containing
@@ -715,8 +714,8 @@ class AME(object):
     @property
     def Nu_Peak(self):
         try:
-        except AttributeError:
             return self.__nu_peak
+        except AttributeError:
             print("AME attribute 'Nu_Peak' not set.")
             sys.exit(1)
 
