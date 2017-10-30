@@ -201,7 +201,7 @@ class test_Bandpass_Convert_Units(unittest.TestCase):
         return
 
     def test_bandpass_convert_units(self):
-        Uc1 = common.bandpass_convert_units("K_CMB", self.simple_channel)
+        Uc1 = com on.bandpass_convert_units("K_CMB", self.simple_channel)
         np.testing.assert_almost_equal(Uc1, self.UcJysr2CMB)
         return
 

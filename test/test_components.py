@@ -1,5 +1,5 @@
 import unittest, os
-from pysm import components, common, read_map, convert_units
+from pysm import components, common, read_map, convert_units, Sky
 from astropy.analytic_functions import blackbody_nu
 import numpy as np, healpy as hp
 import matplotlib.pyplot as plt
@@ -289,18 +289,22 @@ class test_component_interpolation(unittest.TestCase):
         data_dir = os.path.abspath(os.path.dirname(__file__))
         self.fpaths = [os.path.join(data_dir, 'map{:03d}.fits'.format(i)) for i in range(len(self.maps))]
         for fpath, hpix_map in zip(self.fpaths, self.maps):
-            hp.write_map(fpath, hpix_map)
+            hp.write_map(fpath, hpix_map, overwrite=True)
         # Make an example info file that will be given to PySM with paths to the
         # data.
         dat = np.array(zip(self.nus, self.fpaths), dtype=[('nus', float), ('paths', object)])
         self.info_fpath = os.path.join(data_dir, 'test.txt')
         np.savetxt(self.info_fpath, dat, delimiter=" ", fmt="%.4f %s")
-        # Now instantiate a PySM sky object with a synchrotron object using this
-        # interpolated model SED.
+        # Now instantiate a PySM sky object with a synchrotron component using
+        # this interpolated model SED.
         synch_config = [{
             'interpolation': True,
-            'interp_file': self.info_path,
+            'interp_file': self.info_fpath,
+            'nside': self.nside,
+            'pixel_indices': None,
         }]
+        sky = Sky({'synchrotron': synch_config})
+        self.signal = sky.signal()
         return None
 
     def tearDown(self):
@@ -313,7 +317,7 @@ class test_component_interpolation(unittest.TestCase):
         return None
 
     def test_nodes(self):
-        spline_out = self.spline(self.nus)
+        spline_out = self.signal(self.nus)
         perc_diff = (spline_out - self.maps) / self.maps
         np.testing.assert_almost_equal(np.zeros_like(perc_diff), perc_diff, decimal=5)
         return None
@@ -321,8 +325,8 @@ class test_component_interpolation(unittest.TestCase):
     def test_extraploation(self):
         # Just check that querying frequencies outside of the original range
         # does not give an error.
-        self.spline(0.9 * self.nus[0])
-        self.spline(1.1 * self.nus[-1])
+        self.signal(0.9 * self.nus[0])
+        self.signal(1.1 * self.nus[-1])
         return None
 
 

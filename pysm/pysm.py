@@ -74,10 +74,11 @@ class Sky(object):
             self.cmb = component_adder(CMB, self.Config['cmb'])
         if 'dust' in self.Components:
             self.dust = component_adder(Dust, self.Config['dust'])
-            # Here we add an exception for the HD_17 model. This model requires that for bandpass
-            # integration the model be inistialized knowing the bandpass specification, rather than
-            # just inidividual frequencies. Therefore we need to be able to call the model directly
-            # during the bandpass evaluation.
+            # Here we add an exception for the HD_17 model. This model requires
+            # that for bandpass integration the model be inistialized knowing
+            # the bandpass specification, rather than just inidividual
+            # frequencies. Therefore we need to be able to call the model
+            # directly during the bandpass evaluation.
             if self.Config['dust'][0]['model'] == 'hensley_draine_2017':
                 self.Uses_HD17 = True
                 self.HD_17_bpass = initialise_hd_dust_model_bandpass(self.dust, **self.Config['dust'][0])
@@ -377,8 +378,10 @@ class Instrument(object):
         ----------
         Sky: class:`pysm.pysm.Sky`
             Instance of the :class:`pysm.pysm.Sky` class.
-        :type Sky: class
-        :return: no return, writes to file.
+
+        Returns
+        -------
+        None
 
         """
         self.print_info()
@@ -398,9 +401,18 @@ class Instrument(object):
         evenly spaced, if they are not the function will object. Weights
         must be normalisable.
 
-        :param signal: signal function to be integrated of bandpass
-        :type param: function
-        :return: maps after bandpass integration shape either (N_freqs, 3, Npix) or (N_channels, 3, Npix) -- numpy.ndarray
+        Parameters
+        ----------
+        signal: function
+            Signal function to be integrated over bandpass.
+        Sky: object
+            Instance of Sky object correspondign to signal.
+
+        Returns
+        -------
+        array_like(float)
+            Maps after bandpass integration shape either (N_freqs, 3, Npix) or
+            (N_channels, 3, Npix) -- numpy.ndarray
 
         """
         if not self.Use_Bandpass:
@@ -425,8 +437,8 @@ class Instrument(object):
             sys.exit(1)
 
     def normalise_bandpass(self):
-        """Function to normalise input bandpasses such that they integrate to one
-        over the stated frequency range.
+        """Function to normalise input bandpasses such that they integrate to
+        one over the stated frequency range.
 
         """
         self.Channels = [(freqs, weights / np.trapz(weights, freqs * 1.e9)) for (freqs, weights) in self.Channels]
@@ -436,8 +448,15 @@ class Instrument(object):
         """Function to smooth an array of N (T, Q, U) maps with N beams in
         units of arcmin.
 
-        :param map_array:
-        :type map_array:
+        Parameters
+        ----------
+        map_array: array_like(float)
+            Maps to be smootehd.
+
+        Returns
+        -------
+        array_like(float)
+            Smoothed_map_array.
 
         """
         if not self.Use_Smoothing:
@@ -464,9 +483,15 @@ class Instrument(object):
         sensitivities are expected to be in uK_CMB amin for the rest of
         PySM.
 
-        :param map_array: array of maps to which we add noise.
-        :type map_array: numpy.ndarray.
-        :return: map plus noise, and noise -- numpy.ndarray
+        Parameters
+        ----------
+        map_array: array_like(float)
+            Array of maps to which we add noise.
+
+        Returns
+        -------
+        array_like(float)
+            Map plus noise, and noise.
 
         """
         try:
@@ -500,11 +525,18 @@ class Instrument(object):
         factor normally. If using a bandpass we calculate the
         conversion factor following the Planck HFI definitions.
 
-        :param map_array: signal + noise map to convert units of.
-        :type map_array: numpy.ndarray
-        :param noise: noise map to conver units of.
-        :type noise: numpy.ndarray
-        :return: signal + noise map converted to output units, noise map converted to output units -- numpy.ndarray
+        Parameters
+        ----------
+        map_array: array_like(float)
+            Signal + noise map to convert units of.
+        noise: array_like(float)
+            Noise map to convert units of.
+
+        Returns
+        -------
+        array_like(float)
+            Signal + noise map converted to output units, noise map converted
+            to output units.
         """
         if not self.Use_Bandpass:
             #If using a delta bandpass just evaluate the standard unit conversion at
@@ -659,8 +691,15 @@ def initialise_hd_dust_model_bandpass(hd_unint_signal, **kwargs):
     The keyword arguments are expected to be the initialisation
     dictionary for the HD dust component.
 
-    :param hd_unint_signal: signal of the un-integrated HD17 model.
-    :type hd_unint_signal: function
+    Parameters
+    ----------
+    hd_unint_signal: function
+        Signal of the un-integrated HD17 model.
+
+    Returns
+    -------
+    function
+        Model for the bandpass-integrated signal.
 
     """
     #Draw map of uval using Commander dust data.

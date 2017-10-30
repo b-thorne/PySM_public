@@ -15,6 +15,8 @@ from scipy.interpolate import interp1d, RectBivariateSpline
 from scipy.misc import factorial, comb
 from .common import read_key, convert_units, FloatOrArray, invert_safe, B, interpolation
 from .nominal import template
+from numba import jit
+
 
 class Synchrotron(object):
     """Class defining attributes and scaling laws of the synchrotron
@@ -426,14 +428,14 @@ class Dust(object):
         return getattr(self, self.Model)()
 
     def modified_black_body(self):
-        """Returns dust (T, Q, U) maps as a function of frequency, nu.
+        r"""Returns dust (T, Q, U) maps as a function of frequency, nu.
         This is the simplest model, assuming a modified black body SED
         which is the same in temperature and polarisation.
         Note that the spectral index map is expected to be the index
         beta_d such that, in flux units:
 
         .. math::
-            f_nu = (nu/nu_0)^beta_d B(nu, T)/B(nu_0, T),
+            f_\nu = (\nu/\nu_0)^\beta_d B(\nu, T)/B(\nu_0, T),
 
         Therefore, beta_d ~ 1.54.
 
@@ -529,7 +531,7 @@ class Dust(object):
             energy density relative to the MMP83 radiation field. So uval = -0.5
             corresponds to a radiation field 10^-0.5 times as intense as the
             standard interstellar radiation field.
-        - fcar: Mass fraction of carbonaceous grains relative to silicate grains
+        - fcar: Mass fraction of carbonaceous grains relative to silicate grains.
         - f_fe: Fraction of silicate grains with iron inclusions relative to
             silicate grains.
 
@@ -1211,6 +1213,7 @@ def power_law(nu, nu_0, b):
     """
     return (nu / nu_0) ** b
 
+@jit(nopython=True, cache=True)
 def black_body(nu, nu_0, T):
     """Calculate scaling factor for black body SED.
 
@@ -1306,26 +1309,23 @@ def Add_Decorrelation(Component):
 
     Required attributes of the input object:
 
-    - `Component.Add_Decorrelation`: bool
-        If True, add decorrelation, otherwise do not.
-    - `Component.Corr_Len`: float
-        correlation length.
+    - `Component.Add_Decorrelation`: boolm. If True, add decorrelation,
+        otherwise do not.
+    - `Component.Corr_Len`: float. Correlation length.
 
-    Mathematically, the model we implement can be described by:
 
     Examples
     --------
     Add the option of decorrelation to a model by adding this decorrator:
 
-    .. code-block::
+    .. code-block:: python
 
-       class Synchrotron(object):
-
-       def curved_power_law(self):
-           @Add_Decorrelation(self)
-           def model(nu):
-               return np.array([T, Q, U])
-           return model
+    class Synchrotron(object):
+        def curved_power_law(self):
+            @Add_Decorrelation(self)
+            def model(nu):
+                return np.array([T, Q, U])
+            return model
 
     """
     if Component.Add_Decorrelation:
