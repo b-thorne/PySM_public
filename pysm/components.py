@@ -15,7 +15,6 @@ from scipy.interpolate import interp1d, RectBivariateSpline
 from scipy.misc import factorial, comb
 from .common import read_key, convert_units, FloatOrArray, invert_safe, B, interpolation
 from .nominal import template
-from numba import jit
 
 
 class Synchrotron(object):
@@ -1213,7 +1212,7 @@ def power_law(nu, nu_0, b):
     """
     return (nu / nu_0) ** b
 
-@jit(nopython=True, cache=True)
+
 def black_body(nu, nu_0, T):
     """Calculate scaling factor for black body SED.
 
