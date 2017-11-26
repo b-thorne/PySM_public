@@ -1118,7 +1118,11 @@ def Add_Decorrelation(Component):
 
             """
             def wrapper(nu, **kwargs):
-                N_freqs = len(nu)
+                try:
+                    N_freqs = len(nu)
+                except TypeError: # nu is a single value
+                    N_freqs = 1
+                    nu = np.array([nu])
                 rho_cov_I, rho_m_I = get_decorrelation_matrices(nu, Component.Nu_0_I, Component.Corr_Len)
                 rho_cov_P, rho_m_P = get_decorrelation_matrices(nu, Component.Nu_0_P, Component.Corr_Len)
                 extra_I = np.dot(rho_cov_I, np.random.randn(N_freqs))
@@ -1127,7 +1131,11 @@ def Add_Decorrelation(Component):
                 decorr[:, 0, None] = rho_m_I + extra_I[:, None]
                 decorr[:, 1, None] = rho_m_P + extra_P[:, None]
                 decorr[:, 2, None] = rho_m_P + extra_P[:, None]
-                return decorr[..., None] * model(nu, **kwargs)
+                decorrelated = decorr[..., None] * model(nu, **kwargs)
+                if N_freqs == 1:
+                    return decorrelated[0]
+                else:
+                    return decorrelated
             return wrapper
         return decorrelation
 
