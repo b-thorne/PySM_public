@@ -226,7 +226,7 @@ class test_interpolation(unittest.TestCase):
         for fpath, hpix_map in zip(self.fpaths, self.maps):
             hp.write_map(fpath, hpix_map)
         # Make an example info file that will be given to PySM with paths to the data.
-        dat = np.array(zip(self.nus, self.fpaths), dtype=[('nus', float), ('paths', object)])
+        dat = np.array(list(zip(self.nus, self.fpaths)), dtype=[('nus', float), ('paths', object)])
         self.info_fpath = os.path.join(data_dir, 'test.txt')
         np.savetxt(self.info_fpath, dat, delimiter=" ", fmt="%.4f %s")
         # Store spline for tests.

@@ -292,7 +292,7 @@ class test_component_interpolation(unittest.TestCase):
             hp.write_map(fpath, hpix_map, overwrite=True)
         # Make an example info file that will be given to PySM with paths to the
         # data.
-        dat = np.array(zip(self.nus, self.fpaths), dtype=[('nus', float), ('paths', object)])
+        dat = np.array(list(zip(self.nus, self.fpaths)), dtype=[('nus', float), ('paths', object)])
         self.info_fpath = os.path.join(data_dir, 'test.txt')
         np.savetxt(self.info_fpath, dat, delimiter=" ", fmt="%.4f %s")
         # Now instantiate a PySM sky object with a synchrotron component using

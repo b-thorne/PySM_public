@@ -69,7 +69,7 @@ class Sky(object):
         """
         self.__config = config
         self.__components = list(config.keys())
-
+        self.Uses_HD17 = False
         if 'cmb' in self.Components:
             self.cmb = component_adder(CMB, self.Config['cmb'])
         if 'dust' in self.Components:
