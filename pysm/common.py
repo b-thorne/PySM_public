@@ -64,7 +64,7 @@ def write_map(fname, output_map, nside=None, pixel_indices=None):
 
     hp.write_map(fname, full_map, overwrite=True)
 
-def read_map(fname, nside, field = (0), pixel_indices=None, verbose = False):
+def read_map(fname, nside, field = (0), pixel_indices=None, mpi_comm=None, verbose = False):
     """Convenience function wrapping healpy's read_map and upgrade /
     downgrade in one function.
     
@@ -76,11 +76,22 @@ def read_map(fname, nside, field = (0), pixel_indices=None, verbose = False):
     :type field: tuple of ints.  
     :param pixel_indices: read only a subset of pixels in RING ordering
     :type field: array of ints.
+    :param mpi_comm: Read on rank 0 and broadcast over MPI
+    :type field: mpi4py MPI Communicator.
     :param verbose: run in verbose mode.  
     :type verbose: bool.
     :returns: numpy.ndarray -- the maps that have been read. 
     """
-    output_map = hp.ud_grade(hp.read_map(fname, field = field, verbose = verbose), nside_out = nside)
+    if (mpi_comm is not None and mpi_comm.rank==0) or (mpi_comm is None):
+        output_map = hp.ud_grade(hp.read_map(fname, field = field, verbose = verbose), nside_out = nside)
+    elif mpi_comm is not None and mpi_comm.rank>0:
+        npix = hp.nside2npix(nside)
+        shape = npix if len(field) == 1 else (len(field), npix)
+        output_map = np.empty(shape, dtype=np.float64)
+
+    if mpi_comm is not None:
+        mpi_comm.Bcast(output_map, root=0)
+
     if pixel_indices is None:
         return output_map
     else:
