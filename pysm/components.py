@@ -398,19 +398,27 @@ class Dust(object):
         return uval_map
 
     @staticmethod
-    def read_hd_data():
+    def read_hd_data(mpi_comm=None):
         # Read in precomputed dust emission properties in infrared as a function of U
         # the radiation field strength for a given grain composition and grain size distribution.
-        #data_sil contains the emission properties for silicon grains with no iron inclusions.
-        data_sil = np.genfromtxt(template("sil_fe00_2.0.dat"))
-        #data_silfe containts the emission properties for sillicon grains with 5% iron inclusions.
-        data_silfe = np.genfromtxt(template("sil_fe05_2.0.dat"))
-        #data_car contains the emission properties of carbonaceous grains.
-        data_car = np.genfromtxt(template("car_1.0.dat"))
+        if (mpi_comm is not None and mpi_comm.rank==0) or (mpi_comm is None):
+            data = dict()
+            #data_sil contains the emission properties for silicon grains with no iron inclusions.
+            data["sil"] = np.genfromtxt(template("sil_fe00_2.0.dat"))
+            #data_silfe containts the emission properties for sillicon grains with 5% iron inclusions.
+            data["silfe"] = np.genfromtxt(template("sil_fe05_2.0.dat"))
+            #data_car contains the emission properties of carbonaceous grains.
+            data["car"] = np.genfromtxt(template("car_1.0.dat"))
+        elif mpi_comm is not None and mpi_comm.rank>0:
+            data = None
+
+        if mpi_comm is not None:
+            data = mpi_comm.bcast(data, root=0)
+
         #get the wavelength and the set of field strengths over which these values were calculated.
-        wav = data_sil[:, 0]
+        wav = data["sil"][:, 0]
         uvec = np.arange(-3., 5.01, 0.1)
-        return data_sil, data_silfe, data_car, wav, uvec
+        return data["sil"], data["silfe"], data["car"], wav, uvec
 
     def hensley_draine_2017(self, *args, **kwargs):
         """Returns dust (T, Q, U) maps as a function of observing frequenvy in GHz, nu. Uses the Hensley and Draine 2017 model.
@@ -434,7 +442,7 @@ class Dust(object):
         :return: function - model (T, Q, U) maps.
 
         """
-        data_sil, data_silfe, data_car, wav, uvec = self.read_hd_data()
+        data_sil, data_silfe, data_car, wav, uvec = self.read_hd_data(mpi_comm=self.mpi_comm)
 
         #interpolate the pre-computed solutions for the emissivity as a function of grain composition F_fe, Fcar, and
         #field strenth U, to get emissivity as a function of (U, wavelength).
