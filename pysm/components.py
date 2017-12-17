@@ -13,7 +13,7 @@ import os, sys, time
 import scipy.constants as constants
 from scipy.interpolate import interp1d, RectBivariateSpline
 from scipy.misc import factorial, comb
-from .common import read_key, convert_units, FloatOrArray, invert_safe, B
+from .common import read_key, convert_units, FloatOrArray, invert_safe, B, read_map
 from .nominal import template
 
 class Synchrotron(object):
@@ -193,10 +193,10 @@ class Dust(object):
     - `Corr_Len` : correlation length to use in decorrelation model -- float.
 
     """
-    def __init__(self, config):
+    def __init__(self, config, mpi_comm=None):
         for k in config.keys():
             read_key(self, k, config)
-        return
+        self.mpi_comm = mpi_comm
 
     @property
     def Model(self):
@@ -337,12 +337,12 @@ class Dust(object):
             print("Dust attribute 'nside' not set.")
             sys.exit(1)
 
-    def signal(self):
+    def signal(self, **kwargs):
         """Function to return the selected SED.
 
         :return: function -- selected scaling model.
         """
-        return getattr(self, self.Model)()
+        return getattr(self, self.Model)(**kwargs)
 
     def modified_black_body(self):
         """Returns dust (T, Q, U) maps as a function of frequency, nu.
@@ -372,14 +372,14 @@ class Dust(object):
         return model
 
     @staticmethod
-    def draw_uval(seed, nside, pixel_indices=None):
+    def draw_uval(seed, nside, mpi_comm=None):
         #Use Planck MBB temperature data to draw realisations of the temperature and spectral
         #index from normal distribution with mean equal to the maximum likelihood commander value,
         # and standard deviation equal to the commander std.
-        T_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 3, verbose = False)
-        T_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 5, verbose = False)
-        beta_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 6, verbose = False)
-        beta_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 8, verbose = False)
+        T_mean = read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), 256, field = 3, mpi_comm=mpi_comm, verbose = False)
+        T_std = read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), 256, field = 5, mpi_comm=mpi_comm, verbose = False)
+        beta_mean = read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), 256, field = 6, mpi_comm=mpi_comm, verbose = False)
+        beta_std = read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), 256, field = 8, mpi_comm=mpi_comm, verbose = False)
 
         #draw the realisations
         np.random.seed(seed)
@@ -393,8 +393,6 @@ class Dust(object):
         #considered.Since nside is not a parameter Sky knows about we have to get it from
         #A_I, which is not ideal.
         uval_map = hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = nside)
-        if not pixel_indices is None:
-            uval_map = uval_map[pixel_indices]
         return uval_map
 
     @staticmethod
@@ -456,7 +454,7 @@ class Dust(object):
 
         #now draw the random realisation of uval if draw_uval = true
         if self.Draw_Uval:
-            self.Uval = self.draw_uval(self.Draw_Uval_Seed, self.nside)
+            self.Uval = self.draw_uval(self.Draw_Uval_Seed, self.nside, mpi_comm=self.mpi_comm)
         elif not self.Draw_Uval:
             pass
         else:

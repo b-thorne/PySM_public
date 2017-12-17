@@ -53,7 +53,7 @@ class Sky(object):
 
     """
 
-    def __init__(self, config):
+    def __init__(self, config, mpi_comm=None):
         """Read the configuration dict for Sky
 
         Implement the configuration file for the Sky instance. Then
@@ -66,14 +66,14 @@ class Sky(object):
         if 'cmb' in self.Components:
             self.cmb = component_adder(CMB, self.Config['cmb'])
         if 'dust' in self.Components:
-            self.dust = component_adder(Dust, self.Config['dust'])
+            self.dust = component_adder(Dust, self.Config['dust'], mpi_comm=mpi_comm)
             # Here we add an exception for the HD_17 model. This model requires that for bandpass
             # integration the model be inistialized knowing the bandpass specification, rather than
             # just inidividual frequencies. Therefore we need to be able to call the model directly
             # during the bandpass evaluation.
             if self.Config['dust'][0]['model'] == 'hensley_draine_2017':
                 self.Uses_HD17 = True
-                self.HD_17_bpass = initialise_hd_dust_model_bandpass(self.dust, **self.Config['dust'][0])
+                self.HD_17_bpass = initialise_hd_dust_model_bandpass(self.dust, mpi_comm=mpi_comm, **self.Config['dust'][0])
             else:
                 self.Uses_HD17 = False
         if 'synchrotron' in self.Components:
@@ -595,7 +595,7 @@ def component_adder(component_class, dictionary_list, **kwargs):
     # as a function of frequency nu. 
     return total_signal
 
-def initialise_hd_dust_model_bandpass(hd_unint_signal, **kwargs):
+def initialise_hd_dust_model_bandpass(hd_unint_signal, mpi_comm, **kwargs):
     """Function to initialise the bandpass-integrated
     version of the Hensley-Draine 2017 model.
     The keyword arguments are expected to be the initialisation
@@ -606,7 +606,10 @@ def initialise_hd_dust_model_bandpass(hd_unint_signal, **kwargs):
 
     """
     #Draw map of uval using Commander dust data.
-    uval = Dust.draw_uval(kwargs['draw_uval_seed'], kwargs['nside'], kwargs.get('pixel_indices'))
+    uval = Dust.draw_uval(kwargs['draw_uval_seed'], kwargs['nside'], mpi_comm)
+
+    if "pixel_indices" in kwargs:
+        uval = uval[kwargs["pixel_indices"]]
 
     #Read in the precomputed dust emission spectra as a function of lambda and U.
     data_sil, data_silfe, data_car, wav, uvec = Dust.read_hd_data()
