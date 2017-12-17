@@ -40,6 +40,7 @@ def FloatOrArray(model):
             except ValueError:
                 """Fail if not convertable to 1d array"""
                 print("Frequencies must be either float or convertable to array.")
+                raise
                 sys.exit(1)
     return decorator
 
