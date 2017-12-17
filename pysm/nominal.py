@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from .common import read_map
+from .common import read_map, loadtxt
 import numpy as np
 from healpy import nside2npix
 import os
@@ -206,9 +206,9 @@ def f1(nside, pixel_indices=None, mpi_comm=None):
 def c1(nside, pixel_indices=None, mpi_comm=None):
     return [{
         'model': 'taylens',
-        'cmb_specs': np.loadtxt(template('camb_lenspotentialCls.dat'), unpack=True),
+        'cmb_specs': loadtxt(template('camb_lenspotentialCls.dat'), mpi_comm=mpi_comm, unpack=True),
         'delens': False,
-        'delensing_ells': np.loadtxt(template('delens_ells.txt')),
+        'delensing_ells': loadtxt(template('delens_ells.txt'), mpi_comm=mpi_comm),
         'nside': nside,
         'cmb_seed': 1111
     }]
@@ -229,7 +229,7 @@ def a1(nside, pixel_indices=None, mpi_comm=None):
         'nu_0_P': 22.8,
         'A_I': read_map(template('ame_t_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
         'nu_peak_0': 30.,
-        'emissivity': np.loadtxt(template('emissivity.txt'), unpack=True),
+        'emissivity': loadtxt(template('emissivity.txt'), mpi_comm=mpi_comm, unpack=True),
         'nu_peak': read_map(template('ame_nu_peak_0.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
     }, {
         'model': 'spdust',
@@ -237,7 +237,7 @@ def a1(nside, pixel_indices=None, mpi_comm=None):
         'nu_0_P': 41.0,
         'A_I': read_map(template('ame2_t_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
         'nu_peak_0': 30.,
-        'emissivity': np.loadtxt(template('emissivity.txt'), unpack=True),
+        'emissivity': loadtxt(template('emissivity.txt'), mpi_comm=mpi_comm, unpack=True),
         'nu_peak': 33.35
     }]
 
@@ -247,7 +247,7 @@ def a2(nside, pixel_indices=None, mpi_comm=None):
         'nu_0_I': 22.8,
         'A_I': read_map(template('ame_t_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
         'nu_peak_0': 30.,
-        'emissivity': np.loadtxt(template('emissivity.txt'), unpack=True),
+        'emissivity': loadtxt(template('emissivity.txt'), mpi_comm=mpi_comm, unpack=True),
         'nu_peak': read_map(template('ame_nu_peak_0.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
         'pol_frac': 0.02,
         'angle_q': read_map(template('dust_q_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
@@ -257,7 +257,7 @@ def a2(nside, pixel_indices=None, mpi_comm=None):
         'nu_0_I': 41.0,
         'A_I': read_map(template('ame2_t_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
         'nu_peak_0': 30.,
-        'emissivity': np.loadtxt(template('emissivity.txt'), unpack=True),
+        'emissivity': loadtxt(template('emissivity.txt'), mpi_comm=mpi_comm, unpack=True),
         'nu_peak': 33.35,
         'pol_frac': 0.02,
         'angle_q': read_map(template('dust_q_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),

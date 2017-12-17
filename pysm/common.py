@@ -105,6 +105,27 @@ def read_map(fname, nside, field = (0), pixel_indices=None, mpi_comm=None, verbo
         except IndexError: # single component
             return output_map[pixel_indices]
 
+def loadtxt(fname, mpi_comm=None, **kwargs):
+    """MPI-aware loadtxt function
+    reads text file on rank 0 with np.loadtxt and broadcasts over MPI
+
+    :param fname: path to fits file.
+    :type fname: str.
+    :param mpi_comm: Read on rank 0 and broadcast over MPI
+    :type field: mpi4py MPI Communicator.
+    :returns: numpy.ndarray -- the data read
+    """
+
+    if (mpi_comm is not None and mpi_comm.rank==0) or (mpi_comm is None):
+        data = np.loadtxt(fname, **kwargs)
+    elif mpi_comm is not None and mpi_comm.rank>0:
+        data = None
+
+    if mpi_comm is not None:
+        data = mpi_comm.bcast(data, root=0)
+
+    return data
+
 def read_key(Class, keyword, dictionary):
     """Gives the input class an attribute with the name of the keyword and
     value of the corresponding dictionary item.
