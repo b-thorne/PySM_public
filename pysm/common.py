@@ -87,7 +87,11 @@ def read_map(fname, nside, field = (0), pixel_indices=None, mpi_comm=None, verbo
         output_map = hp.ud_grade(hp.read_map(fname, field = field, verbose = verbose), nside_out = nside)
     elif mpi_comm is not None and mpi_comm.rank>0:
         npix = hp.nside2npix(nside)
-        shape = npix if len(field) == 1 else (len(field), npix)
+        try:
+            ncomp = len(field)
+        except TypeError: # field is int
+            ncomp = 1
+        shape = npix if ncomp == 1 else (len(field), npix)
         output_map = np.empty(shape, dtype=np.float64)
 
     if mpi_comm is not None:
