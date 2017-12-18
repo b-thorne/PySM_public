@@ -608,7 +608,7 @@ def initialise_hd_dust_model_bandpass(hd_unint_signal, mpi_comm, **kwargs):
     #Draw map of uval using Commander dust data.
     uval = Dust.draw_uval(kwargs['draw_uval_seed'], kwargs['nside'], mpi_comm)
 
-    if "pixel_indices" in kwargs:
+    if "pixel_indices" in kwargs and kwargs["pixel_indices"] is not None:
         uval = uval[kwargs["pixel_indices"]]
 
     #Read in the precomputed dust emission spectra as a function of lambda and U.
