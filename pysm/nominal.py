@@ -15,15 +15,16 @@ def models(key, nside, pixel_indices=None, mpi_comm=None):
     return model
 
 def d0(nside, pixel_indices=None, mpi_comm=None):
+    A_I = read_map(template('dust_t_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
     return [{
         'model': 'modified_black_body',
         'nu_0_I': 545.,
         'nu_0_P': 353.,
-        'A_I': read_map(template('dust_t_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
+        'A_I': A_I,
         'A_Q': read_map(template('dust_q_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
         'A_U': read_map(template('dust_u_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
-        'spectral_index': np.ones(nside2npix(nside)) * 1.54,
-        'temp': np.ones(nside2npix(nside)) * 20.,
+        'spectral_index': np.ones(len(A_I)) * 1.54,
+        'temp': np.ones(len(A_I)) * 20.,
         'add_decorrelation': False,
     }]
 
@@ -150,14 +151,15 @@ def d8(nside, pixel_indices=None, mpi_comm=None):
     }]
 
 def s0(nside, pixel_indices=None, mpi_comm=None):
+    A_I = read_map(template('synch_t_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
     return [{
         'model': 'power_law',
         'nu_0_I': 0.408,
         'nu_0_P': 23.,
-        'A_I': read_map(template('synch_t_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
+        'A_I': A_I,
         'A_Q': read_map(template('synch_q_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
         'A_U': read_map(template('synch_u_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
-        'spectral_index': np.ones(nside2npix(nside)) * -3,
+        'spectral_index': np.ones(len(A_I)) * -3,
     }]
 
 def s1(nside, pixel_indices=None, mpi_comm=None):

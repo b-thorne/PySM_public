@@ -344,7 +344,7 @@ class Dust(object):
         """
         return getattr(self, self.Model)(**kwargs)
 
-    def modified_black_body(self):
+    def modified_black_body(self, mpi_comm=None):
         """Returns dust (T, Q, U) maps as a function of frequency, nu.
         This is the simplest model, assuming a modified black body SED
         which is the same in temperature and polarisation.
@@ -368,6 +368,8 @@ class Dust(object):
             """
             scaling_I = power_law(nu, self.Nu_0_I, self.Spectral_Index - 2) * black_body(nu, self.Nu_0_I, self.Temp)
             scaling_P = power_law(nu, self.Nu_0_P, self.Spectral_Index - 2) * black_body(nu, self.Nu_0_P, self.Temp)
+            expected_length = hp.nside2npix(self.nside) if self.pixel_indices is None else len(self.pixel_indices)
+            assert len(scaling_I) == expected_length, "{} scaling different from expected {}".format(len(scaling_I), expected_length)
             return np.array([self.A_I * scaling_I, self.A_Q * scaling_P, self.A_U * scaling_P])
         return model
 
