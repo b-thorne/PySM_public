@@ -8,8 +8,14 @@ import healpy as hp
 
 import pysm
 from pysm.nominal import models
-from mpi4py import MPI
 
+import sys
+
+try:
+    from mpi4py import MPI
+except ImportError:
+    print("Skipping MPI test as mpi4py is missing")
+    sys.exit(0)
 
 def is_power2(num):
     return num != 0 and ((num & (num - 1)) == 0)
