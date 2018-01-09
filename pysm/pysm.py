@@ -65,6 +65,7 @@ class Sky(object):
 
         if 'cmb' in self.Components:
             self.cmb = component_adder(CMB, self.Config['cmb'])
+        self.Uses_HD17 = False
         if 'dust' in self.Components:
             self.dust = component_adder(Dust, self.Config['dust'], mpi_comm=mpi_comm)
             # Here we add an exception for the HD_17 model. This model requires that for bandpass
@@ -74,8 +75,6 @@ class Sky(object):
             if self.Config['dust'][0]['model'] == 'hensley_draine_2017':
                 self.Uses_HD17 = True
                 self.HD_17_bpass = initialise_hd_dust_model_bandpass(self.dust, mpi_comm=mpi_comm, **self.Config['dust'][0])
-            else:
-                self.Uses_HD17 = False
         if 'synchrotron' in self.Components:
             self.synchrotron = component_adder(Synchrotron, self.Config['synchrotron'])
         if 'freefree' in self.Components:
