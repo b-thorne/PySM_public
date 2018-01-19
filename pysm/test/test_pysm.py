@@ -47,6 +47,7 @@ class testCheck_Bandpass_Frequencies(unittest.TestCase):
         with self.assertRaises(SystemExit):
             pysm.pysm.check_bpass_frequencies(self.frequencies_uneven)
         
+@pytest.mark.xfail("The test file is not created by any routines")
 class TestNoise(unittest.TestCase):
     def setUp(self):
         self.nside = 1024
