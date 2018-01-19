@@ -33,9 +33,9 @@ class test_Dust(unittest.TestCase):
         dust = components.Dust(d1_config[0])
         signal = dust.signal()
 
-        dust_1_30GHz = read_map(get_testdata('benchmark/check1therm_30p0_64.fits'), 64, field = (0, 1, 2))
-        dust_1_100GHz = read_map(get_testdata('benchmark/check1therm_100p0_64.fits'), 64, field = (0, 1, 2))
-        dust_1_353GHz = read_map(get_testdata('benchmark/check1therm_353p0_64.fits'), 64, field = (0, 1, 2))
+        dust_1_30GHz = read_map(get_testdata('benchmark', 'check1therm_30p0_64.fits'), 64, field = (0, 1, 2))
+        dust_1_100GHz = read_map(get_testdata('benchmark', 'check1therm_100p0_64.fits'), 64, field = (0, 1, 2))
+        dust_1_353GHz = read_map(get_testdata('benchmark', 'check1therm_353p0_64.fits'), 64, field = (0, 1, 2))
 
         self.frac_diff_30GHz = (dust_1_30GHz - signal(30.)) / dust_1_30GHz
         self.frac_diff_100GHz = (dust_1_100GHz - signal(100.)) / dust_1_100GHz
@@ -45,9 +45,9 @@ class test_Dust(unittest.TestCase):
         dust = components.Dust(d2_config[0])
         signal = dust.signal()
         
-        dust_2_30GHz = read_map(get_testdata('benchmark/check6therm_30p0_64.fits'), 64, field = (0, 1, 2)) 
-        dust_2_100GHz = read_map(get_testdata('benchmark/check6therm_100p0_64.fits'), 64, field = (0, 1, 2))
-        dust_2_353GHz = read_map(get_testdata('benchmark/check6therm_353p0_64.fits'), 64, field = (0, 1, 2))
+        dust_2_30GHz = read_map(get_testdata('benchmark', 'check6therm_30p0_64.fits'), 64, field = (0, 1, 2)) 
+        dust_2_100GHz = read_map(get_testdata('benchmark', 'check6therm_100p0_64.fits'), 64, field = (0, 1, 2))
+        dust_2_353GHz = read_map(get_testdata('benchmark', 'check6therm_353p0_64.fits'), 64, field = (0, 1, 2))
 
         self.model_2_frac_diff_30GHz = (dust_2_30GHz - signal(30.)) / dust_1_30GHz
         self.model_2_frac_diff_100GHz = (dust_2_100GHz - signal(100.)) / dust_1_100GHz
@@ -57,9 +57,9 @@ class test_Dust(unittest.TestCase):
         dust = components.Dust(d3_config[0])
         signal = dust.signal()
         
-        dust_3_30GHz = read_map(get_testdata('benchmark/check9therm_30p0_64.fits'), 64, field = (0, 1, 2))
-        dust_3_100GHz = read_map(get_testdata('benchmark/check9therm_100p0_64.fits'), 64, field = (0, 1, 2))
-        dust_3_353GHz = read_map(get_testdata('benchmark/check9therm_353p0_64.fits'), 64, field = (0, 1, 2))
+        dust_3_30GHz = read_map(get_testdata('benchmark', 'check9therm_30p0_64.fits'), 64, field = (0, 1, 2))
+        dust_3_100GHz = read_map(get_testdata('benchmark', 'check9therm_100p0_64.fits'), 64, field = (0, 1, 2))
+        dust_3_353GHz = read_map(get_testdata('benchmark', 'check9therm_353p0_64.fits'), 64, field = (0, 1, 2))
         
         self.model_3_frac_diff_30GHz = (dust_3_30GHz - signal(30.)) / dust_3_30GHz
         self.model_3_frac_diff_100GHz = (dust_3_100GHz - signal(100.)) / dust_3_100GHz
@@ -89,9 +89,9 @@ class test_Synchrotron(unittest.TestCase):
         synchrotron = components.Synchrotron(s1_config[0])
         signal = synchrotron.signal()
 
-        synch_1_30GHz = read_map(get_testdata('benchmark/check2synch_30p0_64.fits'), 64, field = (0, 1, 2))
-        synch_1_100GHz = read_map(get_testdata('benchmark/check2synch_100p0_64.fits'), 64, field = (0, 1, 2))
-        synch_1_353GHz = read_map(get_testdata('benchmark/check2synch_353p0_64.fits'), 64, field = (0, 1, 2))
+        synch_1_30GHz = read_map(get_testdata('benchmark', 'check2synch_30p0_64.fits'), 64, field = (0, 1, 2))
+        synch_1_100GHz = read_map(get_testdata('benchmark', 'check2synch_100p0_64.fits'), 64, field = (0, 1, 2))
+        synch_1_353GHz = read_map(get_testdata('benchmark', 'check2synch_353p0_64.fits'), 64, field = (0, 1, 2))
 
         self.model_1_frac_diff = (synch_1_30GHz - signal(30.)) / synch_1_30GHz
         self.model_1_frac_diff = (synch_1_30GHz - signal(30.)) / synch_1_30GHz
@@ -101,9 +101,9 @@ class test_Synchrotron(unittest.TestCase):
         synchrotron = components.Synchrotron(s2_config[0])
         signal = synchrotron.signal()
         
-        synch_1_30GHz = read_map(get_testdata('benchmark/check7synch_30p0_64.fits'), 64, field = (0, 1, 2))
-        synch_1_100GHz = read_map(get_testdata('benchmark/check7synch_100p0_64.fits'), 64, field = (0, 1, 2))
-        synch_1_353GHz = read_map(get_testdata('benchmark/check7synch_353p0_64.fits'), 64, field = (0, 1, 2))
+        synch_1_30GHz = read_map(get_testdata('benchmark', 'check7synch_30p0_64.fits'), 64, field = (0, 1, 2))
+        synch_1_100GHz = read_map(get_testdata('benchmark', 'check7synch_100p0_64.fits'), 64, field = (0, 1, 2))
+        synch_1_353GHz = read_map(get_testdata('benchmark', 'check7synch_353p0_64.fits'), 64, field = (0, 1, 2))
 
         self.model_2_frac_diff = (synch_2_30GHz - signal(30.)) / synch_2_30GHz
         self.model_2_frac_diff = (synch_2_30GHz - signal(30.)) / synch_2_30GHz
@@ -113,9 +113,9 @@ class test_Synchrotron(unittest.TestCase):
         synchrotron = components.Synchrotron(s3_config[0])
         signal = synchrotron.signal()
         
-        synch_3_30GHz = read_map(get_testdata('benchmark/check10synch_30p0_64.fits'), 64, field = (0, 1, 2))
-        synch_3_100GHz = read_map(get_testdata('benchmark/check10synch_100p0_64.fits'), 64, field = (0, 1, 2))
-        synch_3_353GHz = read_map(get_testdata('benchmark/check10synch_353p0_64.fits'), 64, field = (0, 1, 2))
+        synch_3_30GHz = read_map(get_testdata('benchmark', 'check10synch_30p0_64.fits'), 64, field = (0, 1, 2))
+        synch_3_100GHz = read_map(get_testdata('benchmark', 'check10synch_100p0_64.fits'), 64, field = (0, 1, 2))
+        synch_3_353GHz = read_map(get_testdata('benchmark', 'check10synch_353p0_64.fits'), 64, field = (0, 1, 2))
         
         self.model_1_frac_diff = (synch_3_30GHz - signal(30.)) / synch_1_30GHz
         self.model_1_frac_diff = (synch_3_30GHz - signal(30.)) / synch_1_30GHz
@@ -146,9 +146,9 @@ class test_AME(unittest.TestCase):
 
         signal = lambda nu: AME1.signal()(nu) + AME2.signal()(nu)
 
-        ame_1_30GHz = read_map(get_testdata('benchmark/check3spinn_30p0_64.fits'), 64, field = (0, 1, 2)) 
-        ame_1_100GHz = read_map(get_testdata('benchmark/check3spinn_100p0_64.fits'), 64, field = (0, 1, 2))
-        ame_1_353GHz = read_map(get_testdata('benchmark/check3spinn_353p0_64.fits'), 64, field = (0, 1, 2))
+        ame_1_30GHz = read_map(get_testdata('benchmark', 'check3spinn_30p0_64.fits'), 64, field = (0, 1, 2)) 
+        ame_1_100GHz = read_map(get_testdata('benchmark', 'check3spinn_100p0_64.fits'), 64, field = (0, 1, 2))
+        ame_1_353GHz = read_map(get_testdata('benchmark', 'check3spinn_353p0_64.fits'), 64, field = (0, 1, 2))
         
         self.frac_diff_30GHz = (ame_1_30GHz[0] - signal(30.)[0]) / (ame_1_30GHz[0] + 1.e-14)
         self.frac_diff_100GHz = (ame_1_100GHz[0] - signal(100.)[0]) / (ame_1_100GHz[0] + 1e-14)
@@ -173,9 +173,9 @@ class test_Freefree(unittest.TestCase):
         freefree = components.Freefree(f1_config[0])
         signal = freefree.signal()
 
-        freefree_1_30GHz = read_map(get_testdata('benchmark/check4freef_30p0_64.fits'), 64, field = (0, 1, 2))
-        freefree_1_100GHz = read_map(get_testdata('benchmark/check4freef_100p0_64.fits'), 64, field = (0, 1, 2))
-        freefree_1_353GHz = read_map(get_testdata('benchmark/check4freef_353p0_64.fits'), 64, field = (0, 1, 2))
+        freefree_1_30GHz = read_map(get_testdata('benchmark', 'check4freef_30p0_64.fits'), 64, field = (0, 1, 2))
+        freefree_1_100GHz = read_map(get_testdata('benchmark', 'check4freef_100p0_64.fits'), 64, field = (0, 1, 2))
+        freefree_1_353GHz = read_map(get_testdata('benchmark', 'check4freef_353p0_64.fits'), 64, field = (0, 1, 2))
                         
         self.frac_diff_30GHz = (freefree_1_30GHz[0] - signal(30.)[0]) / (freefree_1_30GHz[0] + 1.e-14)
         self.frac_diff_100GHz = (freefree_1_100GHz[0] - signal(100.)[0]) / (freefree_1_100GHz[0] + 1e-14)
@@ -201,7 +201,7 @@ class test_models_partial_sky(unittest.TestCase):
         signal = freefree.signal()
         freefree_30_T = signal(30.)[0]
         assert len(freefree_30_T) == 1000
-        freefree_1_30GHz = read_map(get_testdata('benchmark/check4freef_30p0_64.fits'), 64, field = (0,))
+        freefree_1_30GHz = read_map(get_testdata('benchmark', 'check4freef_30p0_64.fits'), 64, field = (0,))
         np.testing.assert_array_almost_equal(freefree_30_T, freefree_1_30GHz[pixel_indices], decimal = 3)
 
     def test_partial_hensley_draine_2017(self):
@@ -228,9 +228,9 @@ class test_CMB(unittest.TestCase):
             cmb = components.CMB(self.cmb_config_1)
             signal = cmb.signal()
 
-            self.cmb_1_30GHz = read_map(get_testdata('benchmark/check5cmb_30p0_64.fits'), 64, field = (0, 1, 2))
-            cmb_1_100GHz = read_map(get_testdata('benchmark/check5cmb_100p0_64.fits'), 64, field = (0, 1, 2))
-            cmb_1_353GHz = read_map(get_testdata('benchmark/check5cmb_353p0_64.fits'), 64, field = (0, 1, 2))
+            self.cmb_1_30GHz = read_map(get_testdata('benchmark', 'check5cmb_30p0_64.fits'), 64, field = (0, 1, 2))
+            cmb_1_100GHz = read_map(get_testdata('benchmark', 'check5cmb_100p0_64.fits'), 64, field = (0, 1, 2))
+            cmb_1_353GHz = read_map(get_testdata('benchmark', 'check5cmb_353p0_64.fits'), 64, field = (0, 1, 2))
 
             self.frac_diff_30GHz = (self.cmb_1_30GHz - signal(30.)) / self.cmb_1_30GHz
             self.frac_diff_100GHz = (cmb_1_100GHz - signal(100.)) / cmb_1_100GHz

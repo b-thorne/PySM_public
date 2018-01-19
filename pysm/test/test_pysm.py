@@ -140,8 +140,8 @@ class TestSmoothing(unittest.TestCase):
         self.sky_config = {
             'synchrotron' : models("s1", nside)
             }
-        self.synch_1_30GHz = pysm.read_map(get_testdata('benchmark/check2synch_30p0_64.fits'), 64, field =(0,1,2))[np.newaxis, :, :]
-        self.synch_1_30GHz_smoothed = pysm.read_map(get_testdata('benchmark/check2synch_30p0_64_smoothed1deg.fits'), 64, field =0)
+        self.synch_1_30GHz = pysm.read_map(get_testdata('benchmark', 'check2synch_30p0_64.fits'), 64, field =(0,1,2))[np.newaxis, :, :]
+        self.synch_1_30GHz_smoothed = pysm.read_map(get_testdata('benchmark', 'check2synch_30p0_64_smoothed1deg.fits'), 64, field =0)
         self.instrument_config = {
             'frequencies' : np.array([30., 30.]),
             'beams' : np.array([60., 60.]),
