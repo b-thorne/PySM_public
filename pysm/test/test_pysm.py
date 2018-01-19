@@ -7,6 +7,8 @@ from pysm.nominal import models, template
 import os
 from subprocess import call
 
+import pytest
+
 from . import get_testdata
 
 class BandpassTests(unittest.TestCase):
@@ -47,7 +49,7 @@ class testCheck_Bandpass_Frequencies(unittest.TestCase):
         with self.assertRaises(SystemExit):
             pysm.pysm.check_bpass_frequencies(self.frequencies_uneven)
         
-@pytest.mark.xfail("The test file is not created by any routines")
+@pytest.mark.xfail(True, reason="The test file is not created by any routines")
 class TestNoise(unittest.TestCase):
     def setUp(self):
         self.nside = 1024
