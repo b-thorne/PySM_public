@@ -4,6 +4,7 @@ python:
     - "3.5"
     - "3.6"
 install:
-    - pip install --upgrade pip setuptools wheel pytest
+    - pip install --upgrade pip setuptools wheel pytest runtests
     - pip install -r requirements.txt
-script: pytest
+script:
+    - python run-mpitest.py
