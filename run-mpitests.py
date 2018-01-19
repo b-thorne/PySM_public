@@ -9,7 +9,7 @@ import os.path
 # export the path to the test data for tests to find.
 
 srcdir = os.path.abspath(os.path.dirname(__file__))
-os.environ['PYSM_TESTDATA_DIR'] = os.path.join(srcdir, 'pysm/test/test_data')
+os.environ['PYSM_TESTDATA_DIR'] = os.path.join(srcdir, 'test_data')
 
 tester = Tester(os.path.join(os.path.abspath(__file__)), "pysm")
 
