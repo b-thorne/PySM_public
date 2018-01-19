@@ -7,4 +7,4 @@ install:
     - pip install --upgrade pip setuptools wheel pytest runtests
     - pip install -r requirements.txt
 script:
-    - python run-mpitest.py
+    - python run-mpitests.py
