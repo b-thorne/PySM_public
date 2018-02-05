@@ -5,6 +5,7 @@ import scipy.constants as constants
 from pysm import common
 import os
 import matplotlib.pyplot as plt
+from . import get_testdata
 
 class CommonTests(unittest.TestCase):
 
@@ -79,7 +80,7 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
 
         """
         # Read in the fits file. This contains only the HFI frequencies 100 -> 857.
-        planck_HFI_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), "test_data" , "HFI_RIMO_R1.10.fits")
+        planck_HFI_file = get_testdata("HFI_RIMO_R1.10.fits")
         hdu = fits.open(planck_HFI_file)
         bandpasses = [hdu[i].data for i in range(2, 8)]
         # The table contains 4 lists: wavenumber, transmission, 1-sigma uncertainty, flag.

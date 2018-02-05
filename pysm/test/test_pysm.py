@@ -7,7 +7,9 @@ from pysm.nominal import models, template
 import os
 from subprocess import call
 
-TEST_DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'test_data', 'benchmark'))
+import pytest
+
+from . import get_testdata
 
 class BandpassTests(unittest.TestCase):
     def setUp(self):
@@ -47,6 +49,7 @@ class testCheck_Bandpass_Frequencies(unittest.TestCase):
         with self.assertRaises(SystemExit):
             pysm.pysm.check_bpass_frequencies(self.frequencies_uneven)
         
+@pytest.mark.xfail(True, reason="The test file is not created by any routines")
 class TestNoise(unittest.TestCase):
     def setUp(self):
         self.nside = 1024
@@ -76,7 +79,7 @@ class TestNoise(unittest.TestCase):
 
         self.expected_T_std = sigma_T / pix2amin
         self.expected_P_std = sigma_P / pix2amin
-        self.test_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_nu0023p00GHz_noise_nside%04d.fits"%self.nside)
+        self.test_file = get_testdata("test_nu0023p00GHz_noise_nside%04d.fits"%self.nside)
 
     def tearDown(self):
         try:
@@ -137,8 +140,8 @@ class TestSmoothing(unittest.TestCase):
         self.sky_config = {
             'synchrotron' : models("s1", nside)
             }
-        self.synch_1_30GHz = pysm.read_map(os.path.join(TEST_DATA_DIR, 'check2synch_30p0_64.fits'), 64, field =(0,1,2))[np.newaxis, :, :]
-        self.synch_1_30GHz_smoothed = pysm.read_map(os.path.join(TEST_DATA_DIR, 'check2synch_30p0_64_smoothed1deg.fits'), 64, field =0)
+        self.synch_1_30GHz = pysm.read_map(get_testdata('benchmark', 'check2synch_30p0_64.fits'), 64, field =(0,1,2))[np.newaxis, :, :]
+        self.synch_1_30GHz_smoothed = pysm.read_map(get_testdata('benchmark', 'check2synch_30p0_64_smoothed1deg.fits'), 64, field =0)
         self.instrument_config = {
             'frequencies' : np.array([30., 30.]),
             'beams' : np.array([60., 60.]),
