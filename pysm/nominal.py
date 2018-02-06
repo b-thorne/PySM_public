@@ -215,7 +215,7 @@ def c1(nside, pixel_indices=None, mpi_comm=None):
         'cmb_seed': 1111
     }]
 
-def c2(nside, pixel_indices=None, mpi_comm=mpi_comm):
+def c2(nside, pixel_indices=None, mpi_comm=None):
     return [{
         'model': 'pre_computed',
         'A_I': read_map(template('lensed_cmb.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
