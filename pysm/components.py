@@ -13,7 +13,7 @@ import os, sys, time
 import scipy.constants as constants
 from scipy.interpolate import interp1d, RectBivariateSpline
 from scipy.misc import factorial, comb
-from .common import read_key, convert_units, FloatOrArray, invert_safe, B
+from .common import read_key, convert_units, FloatOrArray, invert_safe, B, read_map
 from .nominal import template
 
 class Synchrotron(object):
@@ -193,10 +193,10 @@ class Dust(object):
     - `Corr_Len` : correlation length to use in decorrelation model -- float.
 
     """
-    def __init__(self, config):
+    def __init__(self, config, mpi_comm=None):
         for k in config.keys():
             read_key(self, k, config)
-        return
+        self.mpi_comm = mpi_comm
 
     @property
     def Model(self):
@@ -337,14 +337,14 @@ class Dust(object):
             print("Dust attribute 'nside' not set.")
             sys.exit(1)
 
-    def signal(self):
+    def signal(self, **kwargs):
         """Function to return the selected SED.
 
         :return: function -- selected scaling model.
         """
-        return getattr(self, self.Model)()
+        return getattr(self, self.Model)(**kwargs)
 
-    def modified_black_body(self):
+    def modified_black_body(self, mpi_comm=None):
         """Returns dust (T, Q, U) maps as a function of frequency, nu.
         This is the simplest model, assuming a modified black body SED
         which is the same in temperature and polarisation.
@@ -368,18 +368,20 @@ class Dust(object):
             """
             scaling_I = power_law(nu, self.Nu_0_I, self.Spectral_Index - 2) * black_body(nu, self.Nu_0_I, self.Temp)
             scaling_P = power_law(nu, self.Nu_0_P, self.Spectral_Index - 2) * black_body(nu, self.Nu_0_P, self.Temp)
+            expected_length = hp.nside2npix(self.nside) if self.pixel_indices is None else len(self.pixel_indices)
+            assert len(scaling_I) == expected_length, "{} scaling different from expected {}".format(len(scaling_I), expected_length)
             return np.array([self.A_I * scaling_I, self.A_Q * scaling_P, self.A_U * scaling_P])
         return model
 
     @staticmethod
-    def draw_uval(seed, nside, pixel_indices=None):
+    def draw_uval(seed, nside, mpi_comm=None):
         #Use Planck MBB temperature data to draw realisations of the temperature and spectral
         #index from normal distribution with mean equal to the maximum likelihood commander value,
         # and standard deviation equal to the commander std.
-        T_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 3, verbose = False)
-        T_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 5, verbose = False)
-        beta_mean = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 6, verbose = False)
-        beta_std = hp.read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), field = 8, verbose = False)
+        T_mean = read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), 256, field = 3, mpi_comm=mpi_comm, verbose = False)
+        T_std = read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), 256, field = 5, mpi_comm=mpi_comm, verbose = False)
+        beta_mean = read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), 256, field = 6, mpi_comm=mpi_comm, verbose = False)
+        beta_std = read_map(template("COM_CompMap_dust-commander_0256_R2.00.fits"), 256, field = 8, mpi_comm=mpi_comm, verbose = False)
 
         #draw the realisations
         np.random.seed(seed)
@@ -393,24 +395,30 @@ class Dust(object):
         #considered.Since nside is not a parameter Sky knows about we have to get it from
         #A_I, which is not ideal.
         uval_map = hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = nside)
-        if not pixel_indices is None:
-            uval_map = uval_map[pixel_indices]
         return uval_map
 
     @staticmethod
-    def read_hd_data():
+    def read_hd_data(mpi_comm=None):
         # Read in precomputed dust emission properties in infrared as a function of U
         # the radiation field strength for a given grain composition and grain size distribution.
-        #data_sil contains the emission properties for silicon grains with no iron inclusions.
-        data_sil = np.genfromtxt(template("sil_fe00_2.0.dat"))
-        #data_silfe containts the emission properties for sillicon grains with 5% iron inclusions.
-        data_silfe = np.genfromtxt(template("sil_fe05_2.0.dat"))
-        #data_car contains the emission properties of carbonaceous grains.
-        data_car = np.genfromtxt(template("car_1.0.dat"))
+        if (mpi_comm is not None and mpi_comm.rank==0) or (mpi_comm is None):
+            data = dict()
+            #data_sil contains the emission properties for silicon grains with no iron inclusions.
+            data["sil"] = np.genfromtxt(template("sil_fe00_2.0.dat"))
+            #data_silfe containts the emission properties for sillicon grains with 5% iron inclusions.
+            data["silfe"] = np.genfromtxt(template("sil_fe05_2.0.dat"))
+            #data_car contains the emission properties of carbonaceous grains.
+            data["car"] = np.genfromtxt(template("car_1.0.dat"))
+        elif mpi_comm is not None and mpi_comm.rank>0:
+            data = None
+
+        if mpi_comm is not None:
+            data = mpi_comm.bcast(data, root=0)
+
         #get the wavelength and the set of field strengths over which these values were calculated.
-        wav = data_sil[:, 0]
+        wav = data["sil"][:, 0]
         uvec = np.arange(-3., 5.01, 0.1)
-        return data_sil, data_silfe, data_car, wav, uvec
+        return data["sil"], data["silfe"], data["car"], wav, uvec
 
     def hensley_draine_2017(self, *args, **kwargs):
         """Returns dust (T, Q, U) maps as a function of observing frequenvy in GHz, nu. Uses the Hensley and Draine 2017 model.
@@ -434,7 +442,7 @@ class Dust(object):
         :return: function - model (T, Q, U) maps.
 
         """
-        data_sil, data_silfe, data_car, wav, uvec = self.read_hd_data()
+        data_sil, data_silfe, data_car, wav, uvec = self.read_hd_data(mpi_comm=self.mpi_comm)
 
         #interpolate the pre-computed solutions for the emissivity as a function of grain composition F_fe, Fcar, and
         #field strenth U, to get emissivity as a function of (U, wavelength).
@@ -448,7 +456,7 @@ class Dust(object):
 
         #now draw the random realisation of uval if draw_uval = true
         if self.Draw_Uval:
-            self.Uval = self.draw_uval(self.Draw_Uval_Seed, self.nside)
+            self.Uval = self.draw_uval(self.Draw_Uval_Seed, self.nside, mpi_comm=self.mpi_comm)
         elif not self.Draw_Uval:
             pass
         else:
