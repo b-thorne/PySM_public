@@ -2,7 +2,10 @@ import unittest, os
 from pysm import components, common, read_map, convert_units
 from pysm import get_template_dir
 
-from astropy.analytic_functions import blackbody_nu
+try:
+    from astropy.analytic_functions import blackbody_nu
+except ImportError:
+    from astropy.modeling.blackbody import blackbody_nu
 import numpy as np, healpy as hp
 import matplotlib.pyplot as plt
 import scipy.constants as constants
