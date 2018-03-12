@@ -119,6 +119,20 @@ class Sky(object):
             return sig
         return signal
 
+    def add_component(self, name, component):
+        """Add a already initialized component object to the sky
+
+        Parameters
+        ==========
+        name : str
+            name of the new component, it cannot include spaces or commas
+        component : object
+            object that provides a signal(nu, **kwargs) function that returns the emission in uK_RJ
+        """
+        self.__components.append(name)
+        setattr(self, name, component.signal)
+
+
 class Instrument(object):
     """This class contains the attributes and methods required to model
     the instrument observing Sky.
