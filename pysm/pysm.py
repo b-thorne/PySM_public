@@ -144,8 +144,8 @@ class Instrument(object):
     - `use_smoothing` : whether or not to use smoothing -- bool.
     - `beams` :  Gaussian beam FWHMs in arcmin. Only used if use_smoothing is True. Must be the same length as frequencies.
     - `add_noise` : whether or not to add noise -- bool
-    - `sens_I` : sensitivity of intensity in uK_RJamin. Only used if add_noise is True. Must be same length as frequencies -- numpy.ndarray
-    - `sens_P` : sensitivity of polarisation in uK_RJamin. Only used if add_noise is True. Must be same length as frequencies -- numpy.ndarray
+    - `sens_I` : sensitivity of intensity in uK_CMBamin. Only used if add_noise is True. Must be same length as frequencies -- numpy.ndarray
+    - `sens_P` : sensitivity of polarisation in uK_CMBamin. Only used if add_noise is True. Must be same length as frequencies -- numpy.ndarray
     - `nside` : nside at which to evaluate maps -- int.
     - `noise_seed` : noise seed -- int.
     - `use_bandpass` : whether or not to use bandpass. If this is True `frequencies` is not required -- bool
