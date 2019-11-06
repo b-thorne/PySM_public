@@ -12,7 +12,7 @@ import healpy as hp
 import os, sys, time
 import scipy.constants as constants
 from scipy.interpolate import interp1d, RectBivariateSpline
-from scipy.misc import factorial, comb
+from scipy.special import factorial, comb
 from .common import read_key, convert_units, FloatOrArray, invert_safe, B, read_map
 from .nominal import template
 
